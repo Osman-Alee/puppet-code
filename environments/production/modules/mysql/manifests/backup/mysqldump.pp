@@ -3,47 +3,35 @@
 # @api private
 #
 class mysql::backup::mysqldump (
-  $backupuser               = '',
-  Variant[String, Sensitive[String]] $backuppassword = '',
-  $backupdir                = '',
-  $maxallowedpacket         = '1M',
-  $backupdirmode            = '0700',
-  $backupdirowner           = 'root',
-  $backupdirgroup           = $mysql::params::root_group,
-  $backupcompress           = true,
-  $backuprotate             = 30,
-  $backupmethod             = 'mysqldump',
-  $backup_success_file_path = undef,
-  $ignore_events            = true,
-  $delete_before_dump       = false,
-  $backupdatabases          = [],
-  $file_per_database        = false,
-  $include_triggers         = false,
-  $include_routines         = false,
-  $ensure                   = 'present',
-  $time                     = ['23', '5'],
-  $prescript                = false,
-  $postscript               = false,
-  $execpath                 = '/usr/bin:/usr/sbin:/bin:/sbin',
-  $optional_args            = [],
-  $mysqlbackupdir_ensure    = 'directory',
-  $mysqlbackupdir_target    = undef,
-  $incremental_backups      = false,
-  $install_cron             = true,
-  $compression_command      = 'bzcat -zc',
-  $compression_extension    = '.bz2'
+  $backupuser         = '',
+  $backuppassword     = '',
+  $backupdir          = '',
+  $maxallowedpacket   = '1M',
+  $backupdirmode      = '0700',
+  $backupdirowner     = 'root',
+  $backupdirgroup     = $mysql::params::root_group,
+  $backupcompress     = true,
+  $backuprotate       = 30,
+  $backupmethod       = 'mysqldump',
+  $ignore_events      = true,
+  $delete_before_dump = false,
+  $backupdatabases    = [],
+  $file_per_database  = false,
+  $include_triggers   = false,
+  $include_routines   = false,
+  $ensure             = 'present',
+  $time               = ['23', '5'],
+  $prescript          = false,
+  $postscript         = false,
+  $execpath           = '/usr/bin:/usr/sbin:/bin:/sbin',
+  $optional_args      = [],
+  $mysqlbackupdir_ensure = 'directory',
+  $mysqlbackupdir_target = undef,
 ) inherits mysql::params {
-  $backuppassword_unsensitive = if $backuppassword =~ Sensitive {
-    $backuppassword.unwrap
-  } else {
-    $backuppassword
-  }
 
-  unless $::osfamily == 'FreeBSD' {
-    if $backupcompress and $compression_command == 'bzcat -zc' {
-      ensure_packages(['bzip2'])
-      Package['bzip2'] -> File['mysqlbackup.sh']
-    }
+  if $backupcompress {
+    ensure_packages(['bzip2'])
+    Package['bzip2'] -> File['mysqlbackup.sh']
   }
 
   mysql_user { "${backupuser}@localhost":
@@ -52,10 +40,10 @@ class mysql::backup::mysqldump (
     require       => Class['mysql::server::root_password'],
   }
 
-  if $include_triggers {
-    $privs = ['SELECT', 'RELOAD', 'LOCK TABLES', 'SHOW VIEW', 'PROCESS', 'TRIGGER']
+  if $include_triggers  {
+    $privs = [ 'SELECT', 'RELOAD', 'LOCK TABLES', 'SHOW VIEW', 'PROCESS', 'TRIGGER' ]
   } else {
-    $privs = ['SELECT', 'RELOAD', 'LOCK TABLES', 'SHOW VIEW', 'PROCESS']
+    $privs = [ 'SELECT', 'RELOAD', 'LOCK TABLES', 'SHOW VIEW', 'PROCESS' ]
   }
 
   mysql_grant { "${backupuser}@localhost/*.*":
@@ -66,11 +54,17 @@ class mysql::backup::mysqldump (
     require    => Mysql_user["${backupuser}@localhost"],
   }
 
-  if $install_cron {
-    if $::osfamily == 'RedHat' {
-      ensure_packages('cronie')
-    } elsif $::osfamily != 'FreeBSD' {
-      ensure_packages('cron')
+  if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '5' {
+    package {'crontabs':
+      ensure => present,
+    }
+  } elsif $::osfamily == 'RedHat' {
+    package {'cronie':
+      ensure => present,
+    }
+  } elsif $::osfamily != 'FreeBSD' {
+    package {'cron':
+      ensure => present,
     }
   }
 
@@ -86,7 +80,6 @@ class mysql::backup::mysqldump (
     require  => File['mysqlbackup.sh'],
   }
 
-  # TODO: use EPP instead of ERB, as EPP can handle Data of Type Sensitive without further ado
   file { 'mysqlbackup.sh':
     ensure  => $ensure,
     path    => '/usr/local/sbin/mysqlbackup.sh',
@@ -112,4 +105,5 @@ class mysql::backup::mysqldump (
       group  => $backupdirgroup,
     }
   }
+
 }

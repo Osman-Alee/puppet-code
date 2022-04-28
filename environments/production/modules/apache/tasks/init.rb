@@ -1,6 +1,4 @@
 #!/opt/puppetlabs/puppet/bin/ruby
-# frozen_string_literal: true
-
 require 'json'
 require 'open3'
 require 'puppet'

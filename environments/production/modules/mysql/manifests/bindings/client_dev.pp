@@ -4,6 +4,7 @@
 # @api private
 #
 class mysql::bindings::client_dev {
+
   if $mysql::bindings::client_dev_package_name {
     package { 'mysql-client_dev':
       ensure          => $mysql::bindings::client_dev_package_ensure,
@@ -12,6 +13,7 @@ class mysql::bindings::client_dev {
       provider        => $mysql::bindings::client_dev_package_provider,
     }
   } else {
-    warning("No MySQL client development package configured for ${::facts['os']['family']}.")
+    warning(translate('No MySQL client development package configured for %{os}.', {'os' => $::operatingsystem }))
   }
+
 }

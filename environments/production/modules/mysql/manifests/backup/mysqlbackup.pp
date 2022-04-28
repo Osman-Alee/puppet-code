@@ -4,39 +4,30 @@
 # @api private
 #
 class mysql::backup::mysqlbackup (
-  $backupuser               = '',
-  Variant[String, Sensitive[String]] $backuppassword = '',
-  $maxallowedpacket         = '1M',
-  $backupdir                = '',
-  $backupdirmode            = '0700',
-  $backupdirowner           = 'root',
-  $backupdirgroup           = $mysql::params::root_group,
-  $backupcompress           = true,
-  $backuprotate             = 30,
-  $backupmethod             = '',
-  $backup_success_file_path = undef,
-  $ignore_events            = true,
-  $delete_before_dump       = false,
-  $backupdatabases          = [],
-  $file_per_database        = false,
-  $include_triggers         = true,
-  $include_routines         = false,
-  $ensure                   = 'present',
-  $time                     = ['23', '5'],
-  $prescript                = false,
-  $postscript               = false,
-  $execpath                 = '/usr/bin:/usr/sbin:/bin:/sbin',
-  $optional_args            = [],
-  $incremental_backups      = false,
-  $install_cron             = true,
-  $compression_command      = undef,
-  $compression_extension    = undef,
+  $backupuser         = '',
+  $backuppassword     = '',
+  $maxallowedpacket   = '1M',
+  $backupdir          = '',
+  $backupdirmode      = '0700',
+  $backupdirowner     = 'root',
+  $backupdirgroup     = $mysql::params::root_group,
+  $backupcompress     = true,
+  $backuprotate       = 30,
+  $backupmethod       = '',
+  $ignore_events      = true,
+  $delete_before_dump = false,
+  $backupdatabases    = [],
+  $file_per_database  = false,
+  $include_triggers   = true,
+  $include_routines   = false,
+  $ensure             = 'present',
+  $time               = ['23', '5'],
+  $prescript          = false,
+  $postscript         = false,
+  $execpath           = '/usr/bin:/usr/sbin:/bin:/sbin',
+  $optional_args      = [],
 ) inherits mysql::params {
-  $backuppassword_unsensitive = if $backuppassword =~ Sensitive {
-    $backuppassword.unwrap
-  } else {
-    $backuppassword
-  }
+
   mysql_user { "${backupuser}@localhost":
     ensure        => $ensure,
     password_hash => mysql::password($backuppassword),
@@ -52,7 +43,7 @@ class mysql::backup::mysqlbackup (
     ensure     => $ensure,
     user       => "${backupuser}@localhost",
     table      => '*.*',
-    privileges => ['RELOAD', 'SUPER', 'REPLICATION CLIENT'],
+    privileges => [ 'RELOAD', 'SUPER', 'REPLICATION CLIENT' ],
     require    => Mysql_user["${backupuser}@localhost"],
   }
 
@@ -60,7 +51,7 @@ class mysql::backup::mysqlbackup (
     ensure     => $ensure,
     user       => "${backupuser}@localhost",
     table      => 'mysql.backup_progress',
-    privileges => ['CREATE', 'INSERT', 'DROP', 'UPDATE'],
+    privileges => [ 'CREATE', 'INSERT', 'DROP', 'UPDATE' ],
     require    => Mysql_user["${backupuser}@localhost"],
   }
 
@@ -68,15 +59,21 @@ class mysql::backup::mysqlbackup (
     ensure     => $ensure,
     user       => "${backupuser}@localhost",
     table      => 'mysql.backup_history',
-    privileges => ['CREATE', 'INSERT', 'SELECT', 'DROP', 'UPDATE'],
+    privileges => [ 'CREATE', 'INSERT', 'SELECT', 'DROP', 'UPDATE' ],
     require    => Mysql_user["${backupuser}@localhost"],
   }
 
-  if $install_cron {
-    if $::osfamily == 'RedHat' {
-      ensure_packages('cronie')
-    } elsif $::osfamily != 'FreeBSD' {
-      ensure_packages('cron')
+  if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '5' {
+    package {'crontabs':
+      ensure => present,
+    }
+  } elsif $::osfamily == 'RedHat' {
+    package {'cronie':
+      ensure => present,
+    }
+  } elsif $::osfamily != 'FreeBSD' {
+    package {'cron':
+      ensure => present,
     }
   }
 
@@ -107,8 +104,8 @@ class mysql::backup::mysqlbackup (
       'incremental_base'       => 'history:last_backup',
       'incremental_backup_dir' => $backupdir,
       'user'                   => $backupuser,
-      'password'               => $backuppassword_unsensitive
-    },
+      'password'               => $backuppassword,
+    }
   }
   $options = mysql::normalise_and_deepmerge($default_options, $mysql::server::override_options)
 

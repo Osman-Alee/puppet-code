@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 Puppet::Type.newtype(:concat_fragment) do
   @doc = <<-DOC
     @summary
@@ -62,7 +60,7 @@ Puppet::Type.newtype(:concat_fragment) do
     defaultto '10'
     validate do |val|
       raise Puppet::ParseError, _('$order is not a string or integer.') unless val.is_a?(String) || val.is_a?(Integer)
-      raise Puppet::ParseError, _('Order cannot contain \'/\', \':\', or \'\\n\'.') if %r{[:\n\/]}.match?(val.to_s)
+      raise Puppet::ParseError, _('Order cannot contain \'/\', \':\', or \'\\n\'.') if val.to_s =~ %r{[:\n\/]}
     end
   end
 

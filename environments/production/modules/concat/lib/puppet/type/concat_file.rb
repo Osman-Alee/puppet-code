@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'puppet/type/file/owner'
 require 'puppet/type/file/group'
 require 'puppet/type/file/mode'
@@ -264,9 +262,9 @@ Puppet::Type.newtype(:concat_file) do
   end
 
   def nested_merge(hash1, hash2)
-    # If a hash is nil or empty, simply return the other
-    return hash1 if hash2.nil? || hash2.empty?
-    return hash2 if hash1.nil? || hash1.empty?
+    # If a hash is empty, simply return the other
+    return hash1 if hash2.empty?
+    return hash2 if hash1.empty?
 
     # Unique merge for arrays
     if hash1.is_a?(Array) && hash2.is_a?(Array)
@@ -276,8 +274,6 @@ Puppet::Type.newtype(:concat_file) do
     # Deep-merge Hashes; higher order value is kept
     hash1.merge(hash2) do |k, v1, v2|
       if v1.is_a?(Hash) && v2.is_a?(Hash)
-        nested_merge(v1, v2)
-      elsif v1.is_a?(Array) && v2.is_a?(Array)
         nested_merge(v1, v2)
       else
         # Fail if there are duplicate keys without force
@@ -314,7 +310,7 @@ Puppet::Type.newtype(:concat_file) do
 
     if self[:ensure_newline]
       newline = Puppet::Util::Platform.windows? ? "\r\n" : "\n"
-      fragment_content << newline unless %r{#{newline}\Z}.match?(fragment_content)
+      fragment_content << newline unless fragment_content =~ %r{#{newline}$}
     end
 
     fragment_content
@@ -341,12 +337,13 @@ Puppet::Type.newtype(:concat_file) do
       file_opts[param] = self[param] unless self[param].nil?
     end
 
+    metaparams = Puppet::Type.metaparams
     excluded_metaparams = [:before, :notify, :require, :subscribe, :tag]
 
-    Puppet::Type.metaparams.each do |metaparam|
-      unless self[metaparam].nil? || excluded_metaparams.include?(metaparam)
-        file_opts[metaparam] = self[metaparam]
-      end
+    metaparams.reject! { |param| excluded_metaparams.include? param }
+
+    metaparams.each do |metaparam|
+      file_opts[metaparam] = self[metaparam] unless self[metaparam].nil?
     end
 
     [Puppet::Type.type(:file).new(file_opts)]
@@ -355,7 +352,7 @@ Puppet::Type.newtype(:concat_file) do
   def eval_generate
     content = should_content
 
-    unless content.nil?
+    if !content.nil? && !content.empty?
       catalog.resource("File[#{self[:path]}]")[:content] = content
     end
 

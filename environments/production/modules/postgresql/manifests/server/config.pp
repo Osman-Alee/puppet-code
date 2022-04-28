@@ -22,7 +22,6 @@ class postgresql::server::config {
   $datadir                      = $postgresql::server::datadir
   $logdir                       = $postgresql::server::logdir
   $service_name                 = $postgresql::server::service_name
-  $service_enable               = $postgresql::server::service_enable
   $log_line_prefix              = $postgresql::server::log_line_prefix
   $timezone                     = $postgresql::server::timezone
   $password_encryption          = $postgresql::server::password_encryption
@@ -257,16 +256,12 @@ class postgresql::server::config {
           content => template('postgresql/systemd-override.erb'),
           require => File['systemd-conf-dir'],
       ;
-    }
 
-    if $service_enable != 'mask' {
       # Remove old unit file to avoid conflicts
-      file { 'old-systemd-override':
-        ensure => absent,
-        path   => "/etc/systemd/system/${service_name}.service",
-        notify => [Exec['restart-systemd'], Class['postgresql::server::service']],
-        before => Class['postgresql::server::reload'],
-      }
+      'old-systemd-override':
+          ensure => absent,
+          path   => "/etc/systemd/system/${service_name}.service",
+      ;
     }
   }
 }

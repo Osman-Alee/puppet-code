@@ -4,7 +4,7 @@
 # @api private
 #
 class mysql::server::service {
-  $options = $mysql::server::_options
+  $options = $mysql::server::options
 
   if $mysql::server::real_service_manage {
     if $mysql::server::real_service_enabled {
@@ -17,7 +17,7 @@ class mysql::server::service {
   }
 
   if $mysql::server::override_options and $mysql::server::override_options['mysqld']
-  and $mysql::server::override_options['mysqld']['user'] {
+      and $mysql::server::override_options['mysqld']['user'] {
     $mysqluser = $mysql::server::override_options['mysqld']['user']
   } else {
     $mysqluser = $options['mysqld']['user']
@@ -46,7 +46,7 @@ class mysql::server::service {
     }
 
     if $mysql::server::override_options and $mysql::server::override_options['mysqld']
-    and $mysql::server::override_options['mysqld']['socket'] {
+        and $mysql::server::override_options['mysqld']['socket'] {
       $mysqlsocket = $mysql::server::override_options['mysqld']['socket']
     } else {
       $mysqlsocket = $options['mysqld']['socket']

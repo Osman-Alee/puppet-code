@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # This has to be a separate type to enable collecting
 Puppet::Type.newtype(:mysql_user) do
   @doc = <<-PUPPET
@@ -49,18 +47,18 @@ Puppet::Type.newtype(:mysql_user) do
   end
 
   newproperty(:password_hash) do
-    desc 'The password hash of the user. Use mysql::password() for creating such a hash.'
+    desc 'The password hash of the user. Use mysql_password() for creating such a hash.'
     newvalue(%r{\w*})
 
     def change_to_s(currentvalue, _newvalue)
       (currentvalue == :absent) ? 'created password' : 'changed password'
     end
 
-    # rubocop:disable Naming/PredicateName
+    # rubocop:disable Style/PredicateName
     def is_to_s(_currentvalue)
       '[old password hash redacted]'
     end
-    # rubocop:enable Naming/PredicateName
+    # rubocop:enable Style/PredicateName
 
     def should_to_s(_newvalue)
       '[new password hash redacted]'

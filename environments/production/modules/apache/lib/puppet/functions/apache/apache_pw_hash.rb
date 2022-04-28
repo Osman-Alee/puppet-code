@@ -1,12 +1,15 @@
-# frozen_string_literal: true
-
-# @summary DEPRECATED.  Use the function [`apache::pw_hash`](#apachepw_hash) instead.
+# Hashes a password in a format suitable for htpasswd files read by apache.
+#
+# Currently uses SHA-hashes, because although this format is considered insecure, its the
+# most secure format supported by the most platforms.
 Puppet::Functions.create_function(:'apache::apache_pw_hash') do
-  dispatch :deprecation_gen do
-    repeated_param 'Any', :args
+  dispatch :apache_pw_hash do
+    required_param 'String[1]', :password
+    return_type 'String'
   end
-  def deprecation_gen(*args)
-    call_function('deprecation', 'apache::apache_pw_hash', 'This function is deprecated, please use apache::pw_hash instead.')
-    call_function('apache::pw_hash', *args)
+
+  def apache_pw_hash(password)
+    require 'base64'
+    '{SHA}' + Base64.strict_encode64(Digest::SHA1.digest(password))
   end
 end

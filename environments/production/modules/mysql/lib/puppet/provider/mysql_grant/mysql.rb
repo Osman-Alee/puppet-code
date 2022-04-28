@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'mysql'))
 Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql) do
   desc 'Set grants for users in MySQL.'
@@ -7,7 +5,7 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
   commands mysql_raw: 'mysql'
 
   def self.instances
-    instance_configs = {}
+    instances = []
     users.map do |user|
       user_string = cmd_user(user)
       query = "SHOW GRANTS FOR #{user_string};"
@@ -19,7 +17,7 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
         # Default root user created by mysql_install_db on a host with fqdn
         # of myhost.mydomain.my: root@myhost.mydomain.my, when MySQL is started
         # with --skip-name-resolve.
-        next if %r{There is no such grant defined for user}.match?(e.inspect)
+        next if e.inspect =~ %r{There is no such grant defined for user}
         raise Puppet::Error, _('#mysql had an error ->  %{inspect}') % { inspect: e.inspect }
       end
       # Once we have the list of grants generate entries for each.
@@ -46,7 +44,7 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
           end
         end
         # Same here, but to remove OPTION leaving just GRANT.
-        options = if %r{WITH\sGRANT\sOPTION}.match?(rest)
+        options = if rest =~ %r{WITH\sGRANT\sOPTION}
                     ['GRANT']
                   else
                     ['NONE']
@@ -54,56 +52,22 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
         # fix double backslash that MySQL prints, so resources match
         table.gsub!('\\\\', '\\')
         # We need to return an array of instances so capture these
-        name = "#{user}@#{host}/#{table}"
-        if instance_configs.key?(name)
-          instance_config = instance_configs[name]
-          stripped_privileges.concat instance_config[:privileges]
-          options.concat instance_config[:options]
-        end
-
-        sorted_privileges = stripped_privileges.uniq.sort
-        if newer_than('mysql' => '8.0.0') && sorted_privileges == ['ALTER', 'ALTER ROUTINE', 'CREATE', 'CREATE ROLE', 'CREATE ROUTINE', 'CREATE TABLESPACE', 'CREATE TEMPORARY TABLES', 'CREATE USER',
-                                                                   'CREATE VIEW', 'DELETE', 'DROP', 'DROP ROLE', 'EVENT', 'EXECUTE', 'FILE', 'INDEX', 'INSERT', 'LOCK TABLES', 'PROCESS', 'REFERENCES',
-                                                                   'RELOAD', 'REPLICATION CLIENT', 'REPLICATION SLAVE', 'SELECT', 'SHOW DATABASES', 'SHOW VIEW', 'SHUTDOWN', 'SUPER', 'TRIGGER',
-                                                                   'UPDATE']
-          sorted_privileges = ['ALL']
-
-        # Currently there is an issue with the behaviour of the module which was highlighted by the 'complex test' test case in 'mysql_grant_spec'. The module, upon retrieving all privileges from an
-        # user, does not take into account that the latest version of mysql now includes dynamic privileges which are returned alongside the original static privileges and are set by 'ALL PRIVILEGES' 
-        # (shortened to 'ALL'). This is a workaround to remove the unnecesary privileges from the sorted_privileges list which is used to check for idempotency in test cases.
-        elsif sorted_privileges == ['ALL', 'APPLICATION_PASSWORD_ADMIN', 'AUDIT_ABORT_EXEMPT', 'AUDIT_ADMIN', 'AUTHENTICATION_POLICY_ADMIN', 'BACKUP_ADMIN', 'BINLOG_ADMIN', 'BINLOG_ENCRYPTION_ADMIN',
-                                    'CLONE_ADMIN', 'CONNECTION_ADMIN', 'ENCRYPTION_KEY_ADMIN', 'FLUSH_OPTIMIZER_COSTS', 'FLUSH_STATUS', 'FLUSH_TABLES', 'FLUSH_USER_RESOURCES',
-                                    'GROUP_REPLICATION_ADMIN', 'GROUP_REPLICATION_STREAM', 'INNODB_REDO_LOG_ARCHIVE', 'INNODB_REDO_LOG_ENABLE', 'PASSWORDLESS_USER_ADMIN', 'PERSIST_RO_VARIABLES_ADMIN',
-                                    'REPLICATION_APPLIER', 'REPLICATION_SLAVE_ADMIN', 'RESOURCE_GROUP_ADMIN', 'RESOURCE_GROUP_USER', 'ROLE_ADMIN', 'SERVICE_CONNECTION_ADMIN',
-                                    'SESSION_VARIABLES_ADMIN', 'SET_USER_ID', 'SHOW_ROUTINE', 'SYSTEM_USER', 'SYSTEM_VARIABLES_ADMIN', 'TABLE_ENCRYPTION_ADMIN', 'XA_RECOVER_ADMIN']
-          sorted_privileges = ['ALL']
-        end
-
-        instance_configs[name] = {
-          privileges: sorted_privileges,
+        instances << new(
+          name: "#{user}@#{host}/#{table}",
+          ensure: :present,
+          privileges: stripped_privileges.sort,
           table: table,
           user: "#{user}@#{host}",
-          options: options.uniq,
-        }
+          options: options,
+        )
       end
-    end
-    instances = []
-    instance_configs.map do |name, config|
-      instances << new(
-        name: name,
-        ensure: :present,
-        privileges: config[:privileges],
-        table: config[:table],
-        user: config[:user],
-        options: config[:options],
-      )
     end
     instances
   end
 
   def self.prefetch(resources)
     users = instances
-    resources.each_key do |name|
+    resources.keys.each do |name|
       if provider = users.find { |user| user.name == name } # rubocop:disable Lint/AssignmentInCondition
         resources[name].provider = provider
       end
@@ -115,9 +79,9 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
     priv_string = self.class.cmd_privs(privileges)
     table_string = privileges.include?('PROXY') ? self.class.cmd_user(table) : self.class.cmd_table(table)
     query = "GRANT #{priv_string}"
-    query += " ON #{table_string}"
-    query += " TO #{user_string}"
-    query += self.class.cmd_options(options) unless options.nil?
+    query << " ON #{table_string}"
+    query << " TO #{user_string}"
+    query << self.class.cmd_options(options) unless options.nil?
     self.class.mysql_caller(query, 'system')
   end
 

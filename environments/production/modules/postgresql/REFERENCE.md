@@ -31,7 +31,6 @@
 * `postgresql::server::config`
 * `postgresql::server::initdb`
 * `postgresql::server::install`
-* `postgresql::server::late_initdb`: Manage the default encoding when database initialization is managed by the package
 * `postgresql::server::passwd`
 * `postgresql::server::reload`
 * `postgresql::server::service`
@@ -42,7 +41,6 @@
 * [`postgresql::server::database`](#postgresqlserverdatabase): Define for creating a database.
 * [`postgresql::server::database_grant`](#postgresqlserverdatabase_grant): Manage a database grant.
 * [`postgresql::server::db`](#postgresqlserverdb): Define for conveniently creating a role, database and assigning the correctpermissions.
-* [`postgresql::server::default_privileges`](#postgresqlserverdefault_privileges): Manage a database defaults privileges. Only works with PostgreSQL version 9.6 and above.
 * [`postgresql::server::extension`](#postgresqlserverextension): Activate an extension on a postgresql database.
 * [`postgresql::server::grant`](#postgresqlservergrant): Define for granting permissions to roles.
 * [`postgresql::server::grant_role`](#postgresqlservergrant_role): Define for granting membership to a role.
@@ -179,7 +177,6 @@ The following parameters are available in the `postgresql::globals` class:
 * [`postgis_version`](#postgis_version)
 * [`repo_proxy`](#repo_proxy)
 * [`repo_baseurl`](#repo_baseurl)
-* [`yum_repo_commonurl`](#yum_repo_commonurl)
 * [`needs_initdb`](#needs_initdb)
 * [`encoding`](#encoding)
 * [`locale`](#locale)
@@ -502,14 +499,6 @@ Default value: ``undef``
 Data type: `Any`
 
 Sets the baseurl for the PostgreSQL repository. Useful if you host your own mirror of the repository.
-
-Default value: ``undef``
-
-##### <a name="yum_repo_commonurl"></a>`yum_repo_commonurl`
-
-Data type: `Any`
-
-Sets the url for the PostgreSQL common Yum repository. Useful if you host your own mirror of the YUM repository.
 
 Default value: ``undef``
 
@@ -864,7 +853,7 @@ The following parameters are available in the `postgresql::server` class:
 
 ##### <a name="postgres_password"></a>`postgres_password`
 
-Data type: `Optional[Variant[String[1], Sensitive[String[1]], Integer]]`
+Data type: `Any`
 
 Sets the password for the postgres user to your specified value. By default, this setting uses the superuser account in the Postgres database, with a user called postgres and no password.
 
@@ -1330,7 +1319,7 @@ The following parameters are available in the `postgresql::server::contrib` clas
 
 ##### <a name="package_name"></a>`package_name`
 
-Data type: `Optional[String[1]]`
+Data type: `String`
 
 The name of the PostgreSQL contrib package.
 
@@ -1647,7 +1636,7 @@ User to create and assign access to the database upon creation. Mandatory.
 
 ##### <a name="password"></a>`password`
 
-Data type: `Variant[String, Sensitive[String]]`
+Data type: `Any`
 
 Required Sets the password for the created user.
 
@@ -1722,140 +1711,6 @@ Data type: `Any`
 Sets a user as the owner of the database.
 
 Default value: ``undef``
-
-### <a name="postgresqlserverdefault_privileges"></a>`postgresql::server::default_privileges`
-
-Manage a database defaults privileges. Only works with PostgreSQL version 9.6 and above.
-
-#### Parameters
-
-The following parameters are available in the `postgresql::server::default_privileges` defined type:
-
-* [`target_role`](#target_role)
-* [`ensure`](#ensure)
-* [`role`](#role)
-* [`db`](#db)
-* [`object_type`](#object_type)
-* [`privilege`](#privilege)
-* [`schema`](#schema)
-* [`psql_db`](#psql_db)
-* [`psql_user`](#psql_user)
-* [`psql_path`](#psql_path)
-* [`port`](#port)
-* [`connect_settings`](#connect_settings)
-* [`psql_path`](#psql_path)
-* [`group`](#group)
-
-##### <a name="target_role"></a>`target_role`
-
-Data type: `Optional[String]`
-
-Target role whose created objects will receive the default privileges. Defaults to the current user.
-
-Default value: ``undef``
-
-##### <a name="ensure"></a>`ensure`
-
-Data type: `Enum['present',
-    'absent'
-  ]`
-
-Specifies whether to grant or revoke the privilege.
-
-Default value: `'present'`
-
-##### <a name="role"></a>`role`
-
-Data type: `String`
-
-Specifies the role or user whom you are granting access to.
-
-##### <a name="db"></a>`db`
-
-Data type: `String`
-
-Specifies the database to which you are granting access.
-
-##### <a name="object_type"></a>`object_type`
-
-Data type: `Pattern[
-    /(?i:^FUNCTIONS$)/,
-    /(?i:^ROUTINES$)/,
-    /(?i:^SEQUENCES$)/,
-    /(?i:^TABLES$)/,
-    /(?i:^TYPES$)/,
-    /(?i:^SCHEMAS$)/
-  ]`
-
-Specify target object type: 'FUNCTIONS', 'ROUTINES', 'SEQUENCES', 'TABLES', 'TYPES'.
-
-##### <a name="privilege"></a>`privilege`
-
-Data type: `String`
-
-Specifies comma-separated list of privileges to grant. Valid options: depends on object type.
-
-##### <a name="schema"></a>`schema`
-
-Data type: `String`
-
-Target schema. Defaults to 'public'. Can be set to '' to apply to all schemas.
-
-Default value: `'public'`
-
-##### <a name="psql_db"></a>`psql_db`
-
-Data type: `String`
-
-Defines the database to execute the grant against. This should not ordinarily be changed from the default.
-
-Default value: `$postgresql::server::default_database`
-
-##### <a name="psql_user"></a>`psql_user`
-
-Data type: `String`
-
-Specifies the OS user for running psql. Default value: The default user for the module, usually 'postgres'.
-
-Default value: `$postgresql::server::user`
-
-##### <a name="psql_path"></a>`psql_path`
-
-Data type: `String`
-
-Specifies the OS user for running psql. Default value: The default user for the module, usually 'postgres'.
-
-Default value: `$postgresql::server::psql_path`
-
-##### <a name="port"></a>`port`
-
-Data type: `Integer`
-
-Specifies the port to access the server. Default value: The default user for the module, usually '5432'.
-
-Default value: `$postgresql::server::port`
-
-##### <a name="connect_settings"></a>`connect_settings`
-
-Data type: `Hash`
-
-Specifies a hash of environment variables used when connecting to a remote server.
-
-Default value: `$postgresql::server::default_connect_settings`
-
-##### <a name="psql_path"></a>`psql_path`
-
-Specifies the path to the psql command.
-
-Default value: `$postgresql::server::psql_path`
-
-##### <a name="group"></a>`group`
-
-Data type: `String`
-
-
-
-Default value: `$postgresql::server::group`
 
 ### <a name="postgresqlserverextension"></a>`postgresql::server::extension`
 
@@ -2571,8 +2426,6 @@ The following parameters are available in the `postgresql::server::role` defined
 * [`psql_group`](#psql_group)
 * [`psql_path`](#psql_path)
 * [`module_workdir`](#module_workdir)
-* [`hash`](#hash)
-* [`salt`](#salt)
 
 ##### <a name="update_password"></a>`update_password`
 
@@ -2584,7 +2437,7 @@ Default value: ``true``
 
 ##### <a name="password_hash"></a>`password_hash`
 
-Data type: `Variant[Boolean, String, Sensitive[String]]`
+Data type: `Any`
 
 Sets the hash to use during password creation.
 
@@ -2717,22 +2570,6 @@ Data type: `Any`
 Specifies working directory under which the psql command should be executed. May need to specify if '/tmp' is on volume mounted with noexec option.
 
 Default value: `$postgresql::server::module_workdir`
-
-##### <a name="hash"></a>`hash`
-
-Data type: `Enum['md5', 'scram-sha-256']`
-
-Specify the hash method for pg password
-
-Default value: `'md5'`
-
-##### <a name="salt"></a>`salt`
-
-Data type: `Optional[Variant[String[1], Integer]]`
-
-Specify the salt use for the scram-sha-256 encoding password (default username)
-
-Default value: ``undef``
 
 ### <a name="postgresqlserverschema"></a>`postgresql::server::schema`
 
@@ -2973,7 +2810,7 @@ Default value: ``undef``
 
 ##### <a name="database_password"></a>`database_password`
 
-Data type: `Optional[Variant[String, Sensitive[String]]]`
+Data type: `Any`
 
 Specifies the password to connect with.
 
@@ -3398,41 +3235,23 @@ Type: Ruby 4.x API
 
 This function returns the postgresql password hash from the clear text username / password
 
-#### `postgresql::postgresql_password(Variant[String[1], Integer] $username, Variant[String[1], Sensitive[String[1]], Integer] $password, Optional[Boolean] $sensitive, Optional[Optional[Enum['md5', 'scram-sha-256']]] $hash, Optional[Optional[Variant[String[1], Integer]]] $salt)`
+#### `postgresql::postgresql_password(Variant[String[1],Integer] $username, Variant[String[1],Integer] $password)`
 
 The postgresql::postgresql_password function.
 
-Returns: `Variant[String, Sensitive[String]]` The postgresql password hash from the clear text username / password.
+Returns: `String` The postgresql password hash from the clear text username / password.
 
 ##### `username`
 
-Data type: `Variant[String[1], Integer]`
+Data type: `Variant[String[1],Integer]`
 
 The clear text `username`
 
 ##### `password`
 
-Data type: `Variant[String[1], Sensitive[String[1]], Integer]`
+Data type: `Variant[String[1],Integer]`
 
 The clear text `password`
-
-##### `sensitive`
-
-Data type: `Optional[Boolean]`
-
-If the Postgresql-Passwordhash should be of Datatype Sensitive[String]
-
-##### `hash`
-
-Data type: `Optional[Optional[Enum['md5', 'scram-sha-256']]]`
-
-Set type for password hash
-
-##### `salt`
-
-Data type: `Optional[Optional[Variant[String[1], Integer]]]`
-
-Use a specific salt value for scram-sha-256, default is username
 
 ### <a name="postgresql_escape"></a>`postgresql_escape`
 

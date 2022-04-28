@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 Puppet::Type.newtype(:mysql_plugin) do
   @doc = <<-PUPPET
     @summary

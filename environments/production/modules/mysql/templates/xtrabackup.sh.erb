@@ -26,9 +26,9 @@ set -o pipefail
 cleanup()
 {
   <%- if @kernel == 'SunOS' -%>
-    gfind "${DIR}/" -mindepth 1 -maxdepth 1 -mtime +${ROTATE} -print0 | gxargs -0 -r rm -rf
+    gfind "${DIR}/" -maxdepth 1 -type f -name "${PREFIX}*.sql*" -mtime +${ROTATE} -print0 | gxargs -0 -r rm -f
   <%- else -%>
-    find "${DIR}/" -mindepth 1 -maxdepth 1 -mtime +${ROTATE} -print0 | xargs -0 -r rm -rf
+    find "${DIR}/" -maxdepth 1 -type f -name "${PREFIX}*.sql*" -mtime +${ROTATE} -print0 | xargs -0 -r rm -f
   <%- end -%>
 }
 
@@ -39,12 +39,8 @@ cleanup
 
 <%- _innobackupex_args = '' -%>
 
-<%- if @backupuser and @backuppassword_unsensitive -%>
-  <%- _innobackupex_args = '--user="' + @backupuser + '" --password="' + @backuppassword_unsensitive + '"' -%>
-<%- end -%>
-
-<%- if @backupcompress -%>
-  <%- _innobackupex_args = _innobackupex_args + ' --compress' -%>
+<%- if @backupuser and @backuppassword -%>
+  <%- _innobackupex_args = '--user="' + @backupuser + '" --password="' + @backuppassword + '"' -%>
 <%- end -%>
 
 <%- if @backupdatabases and @backupdatabases.is_a?(Array) and !@backupdatabases.empty? -%>
@@ -63,7 +59,7 @@ cleanup
 <% unless @delete_before_dump -%>
 if [ $? -eq 0 ] ; then
     cleanup
-    touch <%= @backup_success_file_path %>
+    touch /tmp/mysqlbackup_success
 fi
 <% end -%>
 

@@ -1,6 +1,5 @@
-# frozen_string_literal: true
-
-# @summary Recursively merges two or more hashes together, normalises keys with differing use of dashes and underscores.
+# @summary Recursively merges two or more hashes together, normalises keys with differing use of dashesh and underscores,
+#   then returns the resulting hash.
 #
 # @example
 #   $hash1 = {'one' => 1, 'two' => 2, 'three' => { 'four' => 4 } }
@@ -14,12 +13,6 @@
 # - When there are conficting uses of dashes and underscores in two keys (which mysql would otherwise equate), the rightmost style will win.
 #
 Puppet::Functions.create_function(:'mysql::normalise_and_deepmerge') do
-  # @param args
-  #   Hash to be normalised
-  #
-  # @return hash
-  #   The given hash normalised
-  #
   def normalise_and_deepmerge(*args)
     if args.length < 2
       raise Puppet::ParseError, _('mysql::normalise_and_deepmerge(): wrong number of arguments (%{args_length}; must be at least 2)') % { args_length: args.length }
@@ -46,7 +39,7 @@ Puppet::Functions.create_function(:'mysql::normalise_and_deepmerge') do
 
   def normalized?(hash, key)
     return true if hash.key?(key)
-    return false unless %r{-|_}.match?(key)
+    return false unless key =~ %r{-|_}
     other_key = key.include?('-') ? key.tr('-', '_') : key.tr('_', '-')
     return false unless hash.key?(other_key)
     hash[key] = hash.delete(other_key)

@@ -18,9 +18,9 @@
 # @param dbname
 #   The name of the database to create.
 # @param charset
-#   The character set for the database. Must have the same value as collate to avoid corrective changes. See https://dev.mysql.com/doc/refman/8.0/en/charset-mysql.html for charset and collation pairs.
+#   The character set for the database.
 # @param collate
-#   The collation for the database. Must have the same value as charset to avoid corrective changes. See https://dev.mysql.com/doc/refman/8.0/en/charset-mysql.html for charset and collation pairs.
+#   The collation for the database.
 # @param host
 #   The host to use as part of user@host for grants.
 # @param grant
@@ -40,7 +40,7 @@
 #
 define mysql::db (
   $user,
-  Variant[String, Sensitive[String]] $password,
+  $password,
   $tls_options                                = undef,
   $dbname                                     = $name,
   $charset                                    = 'utf8',
@@ -53,26 +53,21 @@ define mysql::db (
   Enum['absent', 'present'] $ensure           = 'present',
   $import_timeout                             = 300,
   $import_cat_cmd                             = 'cat',
-  $mysql_exec_path                            = undef,
+  $mysql_exec_path                            = $mysql::params::exec_path,
 ) {
+
   $table = "${dbname}.*"
 
   $sql_inputs = join([$sql], ' ')
 
-  include 'mysql::client'
-
-  if ($mysql_exec_path) {
-    $_mysql_exec_path = $mysql_exec_path
-  } else {
-    $_mysql_exec_path = $mysql::params::exec_path
-  }
+  include '::mysql::client'
 
   $db_resource = {
     ensure   => $ensure,
     charset  => $charset,
     collate  => $collate,
     provider => 'mysql',
-    require  => [Class['mysql::client']],
+    require  => [ Class['mysql::client'] ],
   }
   ensure_resource('mysql_database', $dbname, $db_resource)
 
@@ -99,12 +94,12 @@ define mysql::db (
     $refresh = ! $enforce_sql
 
     if $sql {
-      exec { "${dbname}-import":
+      exec{ "${dbname}-import":
         command     => "${import_cat_cmd} ${sql_inputs} | mysql ${dbname}",
         logoutput   => true,
         environment => "HOME=${::root_home}",
         refreshonly => $refresh,
-        path        => "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:${_mysql_exec_path}",
+        path        => "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:${mysql_exec_path}",
         require     => Mysql_grant["${user}@${host}/${table}"],
         subscribe   => Mysql_database[$dbname],
         timeout     => $import_timeout,

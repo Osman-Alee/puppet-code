@@ -57,7 +57,6 @@
 # @param repo_proxy Sets the proxy option for the official PostgreSQL yum-repositories only.
 #
 # @param repo_baseurl Sets the baseurl for the PostgreSQL repository. Useful if you host your own mirror of the repository.
-# @param yum_repo_commonurl Sets the url for the PostgreSQL common Yum repository. Useful if you host your own mirror of the YUM repository.
 #
 # @param needs_initdb Explicitly calls the initdb operation after the server package is installed and before the PostgreSQL service is started.
 #
@@ -143,7 +142,6 @@ class postgresql::globals (
   $postgis_version                                 = undef,
   $repo_proxy                                      = undef,
   $repo_baseurl                                    = undef,
-  $yum_repo_commonurl                              = undef,
 
   $needs_initdb                                    = undef,
 
@@ -167,7 +165,6 @@ class postgresql::globals (
   $default_version = $facts['os']['family'] ? {
     /^(RedHat|Linux)/ => $facts['os']['name'] ? {
       'Fedora' => $facts['os']['release']['major'] ? {
-        /^(34|35)$/    => '13',
         /^(32|33)$/    => '12',
         /^(31)$/       => '11.6',
         /^(30)$/       => '11.2',
@@ -192,20 +189,22 @@ class postgresql::globals (
     },
     'Debian' => $facts['os']['name'] ? {
       'Debian' => $facts['os']['release']['major'] ? {
+        '6'     => '8.4',
+        '7'     => '9.1',
         '8'     => '9.4',
         '9'     => '9.6',
         '10'    => '11',
-        '11'    => '13',
         default => undef,
       },
       'Ubuntu' => $facts['os']['release']['major'] ? {
+        /^(10.04|10.10|11.04)$/ => '8.4',
+        /^(11.10|12.04|12.10|13.04|13.10)$/ => '9.1',
         /^(14.04)$/ => '9.3',
         /^(14.10|15.04|15.10)$/ => '9.4',
         /^(16.04|16.10)$/ => '9.5',
         /^(17.04|17.10)$/ => '9.6',
         /^(18.04)$/ => '10',
         /^(20.04)$/ => '12',
-        /^(21.04|21.10)$/ => '13',
         default => undef,
       },
       default => undef,
@@ -266,10 +265,9 @@ class postgresql::globals (
   # Setup of the repo only makes sense globally, so we are doing this here.
   if($manage_package_repo) {
     class { 'postgresql::repo':
-      version   => $globals_version,
-      proxy     => $repo_proxy,
-      baseurl   => $repo_baseurl,
-      commonurl => $yum_repo_commonurl,
+      version => $globals_version,
+      proxy   => $repo_proxy,
+      baseurl => $repo_baseurl,
     }
   }
 

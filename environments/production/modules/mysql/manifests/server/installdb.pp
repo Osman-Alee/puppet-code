@@ -1,18 +1,19 @@
-# @summary
+# @summary 
 #   Builds initial databases on installation.
 #
 # @api private
 #
 class mysql::server::installdb {
-  $options = $mysql::server::_options
+  $options = $mysql::server::options
 
   if $mysql::server::package_manage {
+
     # Build the initial databases.
-    $mysqluser = $mysql::server::_options['mysqld']['user']
-    $datadir = $mysql::server::_options['mysqld']['datadir']
-    $basedir = $mysql::server::_options['mysqld']['basedir']
+    $mysqluser = $mysql::server::options['mysqld']['user']
+    $datadir = $mysql::server::options['mysqld']['datadir']
+    $basedir = $mysql::server::options['mysqld']['basedir']
     $config_file = $mysql::server::config_file
-    $log_error = $mysql::server::_options['mysqld']['log-error']
+    $log_error = $mysql::server::options['mysqld']['log-error']
 
     if $mysql::server::manage_config_file and $config_file != $mysql::params::config_file {
       $_config_file=$config_file
@@ -20,15 +21,15 @@ class mysql::server::installdb {
       $_config_file=undef
     }
 
-    if $options['mysqld']['log-error'] {
-      file { $options['mysqld']['log-error']:
-        ensure => file,
-        owner  => $mysqluser,
-        group  => $mysql::server::mysql_group,
-        mode   => 'u+rw',
-        before => Mysql_datadir[$datadir],
-      }
+  if $options['mysqld']['log-error'] {
+    file { $options['mysqld']['log-error']:
+      ensure  => present,
+      owner   => $mysqluser,
+      group   => $::mysql::server::mysql_group,
+      mode    => 'u+rw',
+      require => Mysql_datadir[ $datadir ],
     }
+  }
 
     mysql_datadir { $datadir:
       ensure              => 'present',
@@ -45,4 +46,5 @@ class mysql::server::installdb {
       }
     }
   }
+
 }

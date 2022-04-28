@@ -15,7 +15,7 @@
 ##### START CONFIG ###################################################
 
 USER=<%= @backupuser %>
-PASS='<%= @backuppassword_unsensitive %>'
+PASS='<%= @backuppassword %>'
 MAX_ALLOWED_PACKET=<%= @maxallowedpacket %>
 DIR=<%= @backupdir %>
 ROTATE=<%= [ Integer(@backuprotate) - 1, 0 ].max %>
@@ -93,25 +93,25 @@ mysql --defaults-extra-file=$TMPFILE -s -r -N -e 'SHOW DATABASES' | while read d
 do
   <%= @backupmethod -%> --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
     ${ADDITIONAL_OPTIONS} \
-    ${dbname} <% if @backupcompress %>| <%= @compression_command %> <% end %>> ${DIR}/${PREFIX}${dbname}_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %><%= @compression_extension %><% end  %>
+    ${dbname} <% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}${dbname}_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 done
 <% else -%>
 <%= @backupmethod -%> --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
  ${ADDITIONAL_OPTIONS} \
- --all-databases <% if @backupcompress %>| <%= @compression_command %> <% end %>> ${DIR}/${PREFIX}`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %><%= @compression_extension %><% end  %>
+ --all-databases <% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 <% end -%>
 <% else -%>
 <% @backupdatabases.each do |db| -%>
 <%= @backupmethod -%> --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
     ${ADDITIONAL_OPTIONS} \
- <%= db %><% if @backupcompress %>| <%= @compression_command %> <% end %>> ${DIR}/${PREFIX}<%= db %>_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %><%= @compression_extension %><% end  %>
+ <%= db %><% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}<%= db %>_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 <% end -%>
 <% end -%>
 
 <% unless @delete_before_dump -%>
 if [ $? -eq 0 ] ; then
     cleanup
-    touch <%= @backup_success_file_path %>
+    touch /tmp/mysqlbackup_success
 fi
 <% end -%>
 

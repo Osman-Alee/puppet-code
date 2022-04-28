@@ -1,13 +1,14 @@
-# @summary
-#   Installs and configures `mod_status`.
+# Class: apache::mod::status
 #
-# @param allow_from
-#   Array of hosts, ip addresses, partial network numbers or networks, in CIDR notation specifying what hosts can view the special
-#   /server-status URL.  Defaults to ['127.0.0.1', '::1']. 
-#   > Creates Apache < 2.4 directive "Allow from".
+# This class enables and configures Apache mod_status
+# See: http://httpd.apache.org/docs/current/mod/mod_status.html
 #
-# @param requires
-#   A Variant type that can be:
+# Parameters:
+# - $allow_from is an array of hosts, ip addresses, partial network numbers
+#   or networks in CIDR notation specifying what hosts can view the special
+#   /server-status URL.  Defaults to ['127.0.0.1', '::1'].
+#   > Creates Apache < 2.4 directive "Allow from"
+# - $requires is either a:
 #   - String with:
 #     - '' or 'unmanaged' - Host auth control done elsewhere
 #     - 'ip <List of IPs>' - Allowed IPs/ranges
@@ -20,23 +21,23 @@
 #       This encloses "Require" directives in "<Require(Any|All|None)>" block
 #       Optional - If unspecified, "Require" directives follow current flow
 #   > Creates Apache >= 2.4 directives "Require"
+# - $extended_status track and display extended status information. Valid
+#   values are 'On' or 'Off'.  Defaults to 'On'.
+# - $status_path is the path assigned to the Location directive which
+#   defines the URL to access the server status. Defaults to '/server-status'.
 #
-# @param extended_status
-#   Determines whether to track extended status information for each request, via the ExtendedStatus directive.
+# Actions:
+# - Enable and configure Apache mod_status
 #
-# @param status_path 
-#   Path assigned to the Location directive which defines the URL to access the server status.
+# Requires:
+# - The apache class
 #
-# @param apache_version
-#   Used to verify that the Apache version you have requested is compatible with the module.
+# Sample Usage:
 #
-# @example
-#   # Simple usage allowing access from localhost and a private subnet
-#   class { 'apache::mod::status':
-#     $allow_from => ['127.0.0.1', '10.10.10.10/24'],
-#   }
-#
-# @see http://httpd.apache.org/docs/current/mod/mod_status.html for additional documentation.
+#  # Simple usage allowing access from localhost and a private subnet
+#  class { 'apache::mod::status':
+#    $allow_from => ['127.0.0.1', '10.10.10.10/24'],
+#  }
 #
 class apache::mod::status (
   Optional[Array] $allow_from                      = undef,
@@ -45,7 +46,8 @@ class apache::mod::status (
   $apache_version                                  = undef,
   $status_path                                     = '/server-status',
 ) inherits ::apache::params {
-  include apache
+
+  include ::apache
   $_apache_version = pick($apache_version, $apache::apache_version)
   ::apache::mod { 'status': }
 
@@ -56,11 +58,11 @@ class apache::mod::status (
   # Template uses $allow_from, $extended_status, $_apache_version, $status_path
   file { 'status.conf':
     ensure  => file,
-    path    => "${apache::mod_dir}/status.conf",
-    mode    => $apache::file_mode,
+    path    => "${::apache::mod_dir}/status.conf",
+    mode    => $::apache::file_mode,
     content => template('apache/mod/status.conf.erb'),
-    require => Exec["mkdir ${apache::mod_dir}"],
-    before  => File[$apache::mod_dir],
+    require => Exec["mkdir ${::apache::mod_dir}"],
+    before  => File[$::apache::mod_dir],
     notify  => Class['apache::service'],
   }
 }
