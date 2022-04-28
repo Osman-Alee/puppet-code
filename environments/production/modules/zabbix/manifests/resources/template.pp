@@ -17,10 +17,9 @@ define zabbix::resources::template (
   $template_dir    = $zabbix::params::zabbix_template_dir,
   $template_name   = $title,
   $template_source = '',
-  $zabbix_version  = $zabbix::params::zabbix_version,
 ) {
   file { "${template_dir}/${template_name}.xml":
-    ensure => file,
+    ensure => present,
     owner  => 'zabbix',
     group  => 'zabbix',
     source => $template_source,
@@ -29,7 +28,6 @@ define zabbix::resources::template (
   @@zabbix_template { $template_name:
     #template_source => $template_source,
     template_source => "${template_dir}/${template_name}.xml",
-    zabbix_version  => $zabbix_version,
     require         => File["${template_dir}/${template_name}.xml"],
   }
 }

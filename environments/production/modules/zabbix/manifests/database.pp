@@ -72,9 +72,6 @@
 #   The default collation of the database.
 #   default: utf8_general_ci
 #
-# [* database_tablespace*]
-#   The tablespace the database will be created in. This setting only
-#   affects PostgreSQL databases.
 # === Example
 #
 #   When running everything on a single node, please check
@@ -114,7 +111,7 @@
 #
 # Copyright 2014 Werner Dijkerman
 #
-class zabbix::database (
+class zabbix::database(
   $zabbix_type                     = 'server',
   $zabbix_web                      = $zabbix::params::zabbix_web,
   $zabbix_web_ip                   = $zabbix::params::zabbix_web_ip,
@@ -132,30 +129,24 @@ class zabbix::database (
   $database_host_ip                = $zabbix::params::server_database_host_ip,
   $database_charset                = $zabbix::params::server_database_charset,
   $database_collate                = $zabbix::params::server_database_collate,
-  Optional[String[1]] $database_tablespace = $zabbix::params::server_database_tablespace,
 ) inherits zabbix::params {
+
   # So lets create the databases and load all files. This can only be
   # happen when manage_database is set to true (Default).
   if $manage_database == true {
-    # Complain if database_tablespace is set and the database_type is not postgresql
-    if ($database_tablespace and $database_type != 'postgresql') {
-      fail("database_tablespace is set to '${database_tablespace}'. This setting is only useful for PostgreSQL databases.")
-    }
-
     case $database_type {
       'postgresql': {
         # This is the PostgreSQL part.
         # Create the postgres database.
         postgresql::server::db { $database_name:
-          user       => $database_user,
-          owner      => $database_user,
-          password   => postgresql::postgresql_password($database_user, $database_password),
-          require    => Class['postgresql::server'],
-          tablespace => $database_tablespace,
+          user     => $database_user,
+          owner    => $database_user,
+          password => postgresql_password($database_user, $database_password),
+          require  => Class['postgresql::server'],
         }
 
         # When database not in some server with zabbix server include pg_hba_rule to server
-        if ($database_host_ip != $zabbix_server_ip) or ($zabbix_web_ip != $zabbix_server_ip) {
+        if ($database_host_ip != $zabbix_server_ip) or ($zabbix_web_ip != $zabbix_server_ip){
           postgresql::server::pg_hba_rule { 'Allow zabbix-server to access database':
             description => 'Open up postgresql for access from zabbix-server',
             type        => 'host',

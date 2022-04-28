@@ -81,12 +81,6 @@
 # [*logfilesize*]
 #   Maximum size of log file in MB.
 #
-# [*logtype*]
-#   Specifies where log messages are written to. Can be one of:
-#   - console
-#   - file
-#   - system
-#
 # [*debuglevel*]
 #   Specifies debug level.
 #
@@ -132,9 +126,6 @@
 # [*startpollers*]
 #   Number of pre-forked instances of pollers.
 #
-# [*startpreprocessors*]
-#   Number of pre-forked instances of preprocessing workers
-#
 # [*startipmipollers*]
 #   Number of pre-forked instances of ipmi pollers.
 #
@@ -170,16 +161,6 @@
 #
 # [*vmwarecachesize*]
 #   Size of vmware cache, in bytes.
-#
-# [*vaultdbpath*]
-#   Vault path from where credentials for database will be retrieved by keys 'password' and 'username'.
-#
-# [*vaulttoken*]
-#   Vault authentication token that should have been generated exclusively for Zabbix proxy with read-only
-#   permission to the path specified in the optional VaultDBPath configuration parameter.
-#
-# [*vaulturl*]
-#   Vault server HTTP[S] URL. System-wide CA certificates directory will be used if SSLCALocation is not specified.
 #
 # [*snmptrapperfile*]
 #   Temporary file used for passing data from snmp trap daemon to the server.
@@ -265,15 +246,6 @@
 # [*sshkeylocation*]
 #   Location of public and private keys for ssh checks and actions.
 #
-# [*sslcalocation_dir*]
-#   Location of certificate authority (CA) files for SSL server certificate verification.
-#
-# [*sslcertlocation_dir*]
-#   Location of SSL client certificate files for client authentication.
-#
-# [*sslkeylocation_dir*]
-#   Location of SSL private key files for client authentication.
-#
 # [*logslowqueries*]
 #   How long a database query may take before being logged (in milliseconds).
 #
@@ -291,10 +263,6 @@
 #
 # [*loadmodule*]
 #   Module to load at server startup.
-#
-# [*socketdir*]
-#   IPC socket directory.
-#     Directory to store IPC sockets used by internal Zabbix services.
 #
 # === Example
 #
@@ -364,119 +332,99 @@
 # Copyright 2014 Werner Dijkerman
 #
 class zabbix::proxy (
-  Zabbix::Databases $database_type                                            = $zabbix::params::database_type,
-  $database_path                                                              = $zabbix::params::database_path,
-  $zabbix_version                                                             = $zabbix::params::zabbix_version,
-  $zabbix_package_state                                                       = $zabbix::params::zabbix_package_state,
-  Boolean $manage_database                                                    = $zabbix::params::manage_database,
-  Boolean $manage_firewall                                                    = $zabbix::params::manage_firewall,
-  Boolean $manage_repo                                                        = $zabbix::params::manage_repo,
-  Boolean $manage_resources                                                   = $zabbix::params::manage_resources,
-  Boolean $manage_service                                                     = $zabbix::params::manage_service,
-  $zabbix_proxy                                                               = $zabbix::params::zabbix_proxy,
-  $zabbix_proxy_ip                                                            = $zabbix::params::zabbix_proxy_ip,
-  $use_ip                                                                     = $zabbix::params::proxy_use_ip,
-  $zbx_templates                                                              = $zabbix::params::proxy_zbx_templates,
-  $proxy_configfile_path                                                      = $zabbix::params::proxy_configfile_path,
-  $proxy_service_name                                                         = $zabbix::params::proxy_service_name,
-  $mode                                                                       = $zabbix::params::proxy_mode,
-  $zabbix_server_host                                                         = $zabbix::params::proxy_zabbix_server_host,
-  $zabbix_server_port                                                         = $zabbix::params::proxy_zabbix_server_port,
-  $hostname                                                                   = $zabbix::params::proxy_hostname,
-  $listenport                                                                 = $zabbix::params::proxy_listenport,
-  $sourceip                                                                   = $zabbix::params::proxy_sourceip,
-  Integer[0] $enableremotecommands                                            = $zabbix::params::proxy_enableremotecommands,
-  Integer[0] $logremotecommands                                               = $zabbix::params::proxy_logremotecommands,
-  Enum['console', 'file', 'system'] $logtype                                  = $zabbix::params::proxy_logtype,
-  Optional[Stdlib::Absolutepath] $logfile                                     = $zabbix::params::proxy_logfile,
-  $logfilesize                                                                = $zabbix::params::proxy_logfilesize,
-  $debuglevel                                                                 = $zabbix::params::proxy_debuglevel,
-  $pidfile                                                                    = $zabbix::params::proxy_pidfile,
-  $database_schema_path                                                       = $zabbix::params::database_schema_path,
-  $database_host                                                              = $zabbix::params::proxy_database_host,
-  $database_name                                                              = $zabbix::params::proxy_database_name,
-  $database_schema                                                            = $zabbix::params::proxy_database_schema,
-  $database_user                                                              = $zabbix::params::proxy_database_user,
-  $database_password                                                          = $zabbix::params::proxy_database_password,
-  $database_socket                                                            = $zabbix::params::proxy_database_socket,
-  $database_port                                                              = $zabbix::params::proxy_database_port,
-  Optional[Enum['required', 'verify_ca', 'verify_full']] $database_tlsconnect = $zabbix::params::proxy_database_tlsconnect,
-  Optional[Stdlib::Absolutepath] $database_tlscafile                          = $zabbix::params::proxy_database_tlscafile,
-  Optional[Stdlib::Absolutepath] $database_tlscertfile                        = $zabbix::params::proxy_database_tlscertfile,
-  Optional[Stdlib::Absolutepath] $database_tlskeyfile                         = $zabbix::params::proxy_database_tlskeyfile,
-  Optional[String[1]] $database_tlscipher                                     = $zabbix::params::proxy_database_tlscipher,
-  Optional[String[1]] $database_tlscipher13                                   = $zabbix::params::proxy_database_tlscipher13,
-  $localbuffer                                                                = $zabbix::params::proxy_localbuffer,
-  $offlinebuffer                                                              = $zabbix::params::proxy_offlinebuffer,
-  $heartbeatfrequency                                                         = $zabbix::params::proxy_heartbeatfrequency,
-  $configfrequency                                                            = $zabbix::params::proxy_configfrequency,
-  $datasenderfrequency                                                        = $zabbix::params::proxy_datasenderfrequency,
-  $startpollers                                                               = $zabbix::params::proxy_startpollers,
-  $startipmipollers                                                           = $zabbix::params::proxy_startipmipollers,
-  $startpollersunreachable                                                    = $zabbix::params::proxy_startpollersunreachable,
-  Integer[1, 1000] $startpreprocessors                                        = $zabbix::params::proxy_startpreprocessors,
-  $starttrappers                                                              = $zabbix::params::proxy_starttrappers,
-  $startpingers                                                               = $zabbix::params::proxy_startpingers,
-  $startdiscoverers                                                           = $zabbix::params::proxy_startdiscoverers,
-  $starthttppollers                                                           = $zabbix::params::proxy_starthttppollers,
-  $javagateway                                                                = $zabbix::params::proxy_javagateway,
-  $javagatewayport                                                            = $zabbix::params::proxy_javagatewayport,
-  $startjavapollers                                                           = $zabbix::params::proxy_startjavapollers,
-  $startvmwarecollectors                                                      = $zabbix::params::proxy_startvmwarecollectors,
-  Optional[String[1]] $vaultdbpath                                            = $zabbix::params::proxy_vaultdbpath,
-  Optional[String[1]] $vaulttoken                                             = $zabbix::params::proxy_vaulttoken,
-  Stdlib::HTTPSUrl $vaulturl                                                  = $zabbix::params::proxy_vaulturl,
-  $vmwarefrequency                                                            = $zabbix::params::proxy_vmwarefrequency,
-  $vmwareperffrequency                                                        = $zabbix::params::proxy_vmwareperffrequency,
-  $vmwarecachesize                                                            = $zabbix::params::proxy_vmwarecachesize,
-  $vmwaretimeout                                                              = $zabbix::params::proxy_vmwaretimeout,
-  $enablesnmpbulkrequests                                                     = $zabbix::params::proxy_enablesnmpbulkrequests,
-  $snmptrapperfile                                                            = $zabbix::params::proxy_snmptrapperfile,
-  $snmptrapper                                                                = $zabbix::params::proxy_snmptrapper,
-  $listenip                                                                   = $zabbix::params::proxy_listenip,
-  $housekeepingfrequency                                                      = $zabbix::params::proxy_housekeepingfrequency,
-  $cachesize                                                                  = $zabbix::params::proxy_cachesize,
-  $startdbsyncers                                                             = $zabbix::params::proxy_startdbsyncers,
-  $historycachesize                                                           = $zabbix::params::proxy_historycachesize,
-  $historyindexcachesize                                                      = $zabbix::params::proxy_historyindexcachesize,
-  $historytextcachesize                                                       = $zabbix::params::proxy_historytextcachesize,
-  $timeout                                                                    = $zabbix::params::proxy_timeout,
-  $tlsaccept                                                                  = $zabbix::params::proxy_tlsaccept,
-  $tlscafile                                                                  = $zabbix::params::proxy_tlscafile,
-  $tlscertfile                                                                = $zabbix::params::proxy_tlscertfile,
-  $tlsconnect                                                                 = $zabbix::params::proxy_tlsconnect,
-  $tlscrlfile                                                                 = $zabbix::params::proxy_tlscrlfile,
-  $tlskeyfile                                                                 = $zabbix::params::proxy_tlskeyfile,
-  $tlspskfile                                                                 = $zabbix::params::proxy_tlspskfile,
-  $tlspskidentity                                                             = $zabbix::params::proxy_tlspskidentity,
-  Optional[String[1]] $tlscipherall                                           = $zabbix::params::proxy_tlscipherall,
-  Optional[String[1]] $tlscipherall13                                         = $zabbix::params::proxy_tlscipherall13,
-  Optional[String[1]] $tlsciphercert                                          = $zabbix::params::proxy_tlsciphercert,
-  Optional[String[1]] $tlsciphercert13                                        = $zabbix::params::proxy_tlsciphercert13,
-  Optional[String[1]] $tlscipherpsk                                           = $zabbix::params::proxy_tlscipherpsk,
-  Optional[String[1]] $tlscipherpsk13                                         = $zabbix::params::proxy_tlscipherpsk13,
-  $tlsservercertissuer                                                        = $zabbix::params::proxy_tlsservercertissuer,
-  $tlsservercertsubject                                                       = $zabbix::params::proxy_tlsservercertsubject,
-  $trappertimeout                                                             = $zabbix::params::proxy_trappertimeout,
-  $unreachableperiod                                                          = $zabbix::params::proxy_unreachableperiod,
-  $unavaliabledelay                                                           = $zabbix::params::proxy_unavaliabledelay,
-  $unreachabedelay                                                            = $zabbix::params::proxy_unreachabedelay,
-  $externalscripts                                                            = $zabbix::params::proxy_externalscripts,
-  $fpinglocation                                                              = $zabbix::params::proxy_fpinglocation,
-  $fping6location                                                             = $zabbix::params::proxy_fping6location,
-  $sshkeylocation                                                             = $zabbix::params::proxy_sshkeylocation,
-  $logslowqueries                                                             = $zabbix::params::proxy_logslowqueries,
-  $tmpdir                                                                     = $zabbix::params::proxy_tmpdir,
-  $allowroot                                                                  = $zabbix::params::proxy_allowroot,
-  $include_dir                                                                = $zabbix::params::proxy_include,
-  Optional[Stdlib::Absolutepath] $sslcalocation_dir                           = $zabbix::params::proxy_sslcalocation,
-  Optional[Stdlib::Absolutepath] $sslcertlocation_dir                         = $zabbix::params::proxy_sslcertlocation,
-  Optional[Stdlib::Absolutepath] $sslkeylocation_dir                          = $zabbix::params::proxy_sslkeylocation,
-  $loadmodulepath                                                             = $zabbix::params::proxy_loadmodulepath,
-  $loadmodule                                                                 = $zabbix::params::proxy_loadmodule,
-  Boolean $manage_selinux                                                     = $zabbix::params::manage_selinux,
-  Optional[Stdlib::Absolutepath] $socketdir                                   = $zabbix::params::proxy_socketdir,
-) inherits zabbix::params {
+  Zabbix::Databases $database_type = $zabbix::params::database_type,
+  $database_path                   = $zabbix::params::database_path,
+  $zabbix_version                  = $zabbix::params::zabbix_version,
+  $zabbix_package_state            = $zabbix::params::zabbix_package_state,
+  Boolean $manage_database         = $zabbix::params::manage_database,
+  Boolean $manage_firewall         = $zabbix::params::manage_firewall,
+  Boolean $manage_repo             = $zabbix::params::manage_repo,
+  Boolean $manage_resources        = $zabbix::params::manage_resources,
+  Boolean $manage_service          = $zabbix::params::manage_service,
+  $zabbix_proxy                    = $zabbix::params::zabbix_proxy,
+  $zabbix_proxy_ip                 = $zabbix::params::zabbix_proxy_ip,
+  $use_ip                          = $zabbix::params::proxy_use_ip,
+  $zbx_templates                   = $zabbix::params::proxy_zbx_templates,
+  $proxy_configfile_path           = $zabbix::params::proxy_configfile_path,
+  $proxy_service_name              = $zabbix::params::proxy_service_name,
+  $mode                            = $zabbix::params::proxy_mode,
+  $zabbix_server_host              = $zabbix::params::proxy_zabbix_server_host,
+  $zabbix_server_port              = $zabbix::params::proxy_zabbix_server_port,
+  $hostname                        = $zabbix::params::proxy_hostname,
+  $listenport                      = $zabbix::params::proxy_listenport,
+  $sourceip                        = $zabbix::params::proxy_sourceip,
+  Integer[0] $enableremotecommands = $zabbix::params::proxy_enableremotecommands,
+  Integer[0] $logremotecommands    = $zabbix::params::proxy_logremotecommands,
+  $logfile                         = $zabbix::params::proxy_logfile,
+  $logfilesize                     = $zabbix::params::proxy_logfilesize,
+  $debuglevel                      = $zabbix::params::proxy_debuglevel,
+  $pidfile                         = $zabbix::params::proxy_pidfile,
+  $database_schema_path            = $zabbix::params::database_schema_path,
+  $database_host                   = $zabbix::params::proxy_database_host,
+  $database_name                   = $zabbix::params::proxy_database_name,
+  $database_schema                 = $zabbix::params::proxy_database_schema,
+  $database_user                   = $zabbix::params::proxy_database_user,
+  $database_password               = $zabbix::params::proxy_database_password,
+  $database_socket                 = $zabbix::params::proxy_database_socket,
+  $database_port                   = $zabbix::params::proxy_database_port,
+  $localbuffer                     = $zabbix::params::proxy_localbuffer,
+  $offlinebuffer                   = $zabbix::params::proxy_offlinebuffer,
+  $heartbeatfrequency              = $zabbix::params::proxy_heartbeatfrequency,
+  $configfrequency                 = $zabbix::params::proxy_configfrequency,
+  $datasenderfrequency             = $zabbix::params::proxy_datasenderfrequency,
+  $startpollers                    = $zabbix::params::proxy_startpollers,
+  $startipmipollers                = $zabbix::params::proxy_startipmipollers,
+  $startpollersunreachable         = $zabbix::params::proxy_startpollersunreachable,
+  $starttrappers                   = $zabbix::params::proxy_starttrappers,
+  $startpingers                    = $zabbix::params::proxy_startpingers,
+  $startdiscoverers                = $zabbix::params::proxy_startdiscoverers,
+  $starthttppollers                = $zabbix::params::proxy_starthttppollers,
+  $javagateway                     = $zabbix::params::proxy_javagateway,
+  $javagatewayport                 = $zabbix::params::proxy_javagatewayport,
+  $startjavapollers                = $zabbix::params::proxy_startjavapollers,
+  $startvmwarecollectors           = $zabbix::params::proxy_startvmwarecollectors,
+  $vmwarefrequency                 = $zabbix::params::proxy_vmwarefrequency,
+  $vmwareperffrequency             = $zabbix::params::proxy_vmwareperffrequency,
+  $vmwarecachesize                 = $zabbix::params::proxy_vmwarecachesize,
+  $vmwaretimeout                   = $zabbix::params::proxy_vmwaretimeout,
+  $enablesnmpbulkrequests          = $zabbix::params::proxy_enablesnmpbulkrequests,
+  $snmptrapperfile                 = $zabbix::params::proxy_snmptrapperfile,
+  $snmptrapper                     = $zabbix::params::proxy_snmptrapper,
+  $listenip                        = $zabbix::params::proxy_listenip,
+  $housekeepingfrequency           = $zabbix::params::proxy_housekeepingfrequency,
+  $cachesize                       = $zabbix::params::proxy_cachesize,
+  $startdbsyncers                  = $zabbix::params::proxy_startdbsyncers,
+  $historycachesize                = $zabbix::params::proxy_historycachesize,
+  $historyindexcachesize           = $zabbix::params::proxy_historyindexcachesize,
+  $historytextcachesize            = $zabbix::params::proxy_historytextcachesize,
+  $timeout                         = $zabbix::params::proxy_timeout,
+  $tlsaccept                       = $zabbix::params::proxy_tlsaccept,
+  $tlscafile                       = $zabbix::params::proxy_tlscafile,
+  $tlscertfile                     = $zabbix::params::proxy_tlscertfile,
+  $tlsconnect                      = $zabbix::params::proxy_tlsconnect,
+  $tlscrlfile                      = $zabbix::params::proxy_tlscrlfile,
+  $tlskeyfile                      = $zabbix::params::proxy_tlskeyfile,
+  $tlspskfile                      = $zabbix::params::proxy_tlspskfile,
+  $tlspskidentity                  = $zabbix::params::proxy_tlspskidentity,
+  $tlsservercertissuer             = $zabbix::params::proxy_tlsservercertissuer,
+  $tlsservercertsubject            = $zabbix::params::proxy_tlsservercertsubject,
+  $trappertimeout                  = $zabbix::params::proxy_trappertimeout,
+  $unreachableperiod               = $zabbix::params::proxy_unreachableperiod,
+  $unavaliabledelay                = $zabbix::params::proxy_unavaliabledelay,
+  $unreachabedelay                 = $zabbix::params::proxy_unreachabedelay,
+  $externalscripts                 = $zabbix::params::proxy_externalscripts,
+  $fpinglocation                   = $zabbix::params::proxy_fpinglocation,
+  $fping6location                  = $zabbix::params::proxy_fping6location,
+  $sshkeylocation                  = $zabbix::params::proxy_sshkeylocation,
+  $logslowqueries                  = $zabbix::params::proxy_logslowqueries,
+  $tmpdir                          = $zabbix::params::proxy_tmpdir,
+  $allowroot                       = $zabbix::params::proxy_allowroot,
+  $include_dir                     = $zabbix::params::proxy_include,
+  $loadmodulepath                  = $zabbix::params::proxy_loadmodulepath,
+  $loadmodule                      = $zabbix::params::proxy_loadmodule,
+  Boolean $manage_selinux          = $zabbix::params::manage_selinux,
+  ) inherits zabbix::params {
+
   # check osfamily, Arch is currently not supported for web
   if $facts['os']['family'] == 'Archlinux' {
     fail('Archlinux is currently not supported for zabbix::proxy ')
@@ -501,20 +449,13 @@ class zabbix::proxy (
   # is set to false, you'll get warnings like this:
   # "Warning: You cannot collect without storeconfigs being set"
   if $manage_resources {
-    if String($mode) == '0' {
-      # Active proxies don't use `ipaddress`, `use_ip` or `port`.
-      class { 'zabbix::resources::proxy':
-        hostname => $hostname,
-        mode     => $mode,
-      }
-    } else {
-      class { 'zabbix::resources::proxy':
-        hostname  => $hostname,
-        ipaddress => $listen_ip,
-        use_ip    => $use_ip,
-        mode      => $mode,
-        port      => $listenport,
-      }
+    class { 'zabbix::resources::proxy':
+      hostname  => $hostname,
+      ipaddress => $listen_ip,
+      use_ip    => $use_ip,
+      mode      => $mode,
+      port      => $listenport,
+      templates => $zbx_templates,
     }
 
     zabbix::userparameters { 'Zabbix_Proxy': template => 'Template App Zabbix Proxy', }
@@ -530,21 +471,6 @@ class zabbix::proxy (
   }
 
   if $manage_database {
-    if versioncmp($zabbix_version, '5.4') == 0 {
-      package { 'zabbix-sql-scripts':
-        ensure  => present,
-        require => Class['zabbix::repo'],
-        tag     => 'zabbix',
-      }
-    }
-
-    # Zabbix version 5.4 uses zabbix-sql-scripts for initializing the database.
-    if versioncmp($zabbix_version, '5.4') == 0 {
-      $zabbix_database_require = [Package["zabbix-proxy-${db}"], Package['zabbix-sql-scripts']]
-    } else {
-      $zabbix_database_require = Package["zabbix-proxy-${db}"]
-    }
-
     case $database_type {
       'postgresql' : {
         # Execute the postgresql scripts
@@ -556,9 +482,8 @@ class zabbix::proxy (
           database_user        => $database_user,
           database_password    => $database_password,
           database_host        => $database_host,
-          database_port        => $database_port,
           database_path        => $database_path,
-          require              => $zabbix_database_require,
+          require              => Package["zabbix-proxy-${db}"],
         }
       }
       'mysql'      : {
@@ -571,9 +496,8 @@ class zabbix::proxy (
           database_user        => $database_user,
           database_password    => $database_password,
           database_host        => $database_host,
-          database_port        => $database_port,
           database_path        => $database_path,
-          require              => $zabbix_database_require,
+          require              => Package["zabbix-proxy-${db}"],
         }
       }
 
@@ -593,13 +517,12 @@ class zabbix::proxy (
     }
 
     Package["zabbix-proxy-${db}"] {
-      require => Class['zabbix::repo']
-    }
+      require => Class['zabbix::repo'] }
   }
 
   # Now we are going to install the correct packages.
   case $facts['os']['name'] {
-    'redhat', 'centos', 'oraclelinux', 'VirtuozzoLinux': {
+    'redhat', 'centos', 'oraclelinux' : {
       #There is no zabbix-proxy package in 3.0
       if versioncmp('3.0',$zabbix_version) > 0 {
         package { 'zabbix-proxy':
@@ -634,43 +557,44 @@ class zabbix::proxy (
       subscribe  => [
         File[$proxy_configfile_path],
         Class['zabbix::database']
-      ],
+        ],
       require    => [
         Package["zabbix-proxy-${db}"],
         File[$include_dir],
         File[$proxy_configfile_path],
         Class['zabbix::database']
-      ],
+        ],
     }
   }
+
 
   $before_database = $manage_service ? {
     true  => [
       Service[$proxy_service_name],
       Class["zabbix::database::${database_type}"]
-    ],
+      ],
     false => Class["zabbix::database::${database_type}"],
   }
 
   # if we want to manage the databases, we do
   # some stuff. (for maintaining database only.)
-  if $manage_database {
-    class { 'zabbix::database':
-      database_type     => $database_type,
-      zabbix_type       => 'proxy',
-      database_name     => $database_name,
-      database_user     => $database_user,
-      database_password => $database_password,
-      database_host     => $database_host,
-      zabbix_proxy      => $zabbix_proxy,
-      zabbix_proxy_ip   => $zabbix_proxy_ip,
-      before            => $before_database,
+  if $manage_database  {
+      class { 'zabbix::database':
+        database_type     => $database_type,
+        zabbix_type       => 'proxy',
+        database_name     => $database_name,
+        database_user     => $database_user,
+        database_password => $database_password,
+        database_host     => $database_host,
+        zabbix_proxy      => $zabbix_proxy,
+        zabbix_proxy_ip   => $zabbix_proxy_ip,
+        before            => $before_database,
+      }
     }
-  }
 
   # Configuring the zabbix-proxy configuration file
   file { $proxy_configfile_path:
-    ensure  => file,
+    ensure  => present,
     owner   => 'zabbix',
     group   => 'zabbix',
     mode    => '0644',
@@ -694,16 +618,16 @@ class zabbix::proxy (
       state  => [
         'NEW',
         'RELATED',
-        'ESTABLISHED',
-      ],
+        'ESTABLISHED'],
     }
   }
 
   # check if selinux is active and allow zabbix
-  if fact('os.selinux.enabled') == true and $manage_selinux {
-    selboolean { 'zabbix_can_network':
+  if $facts['selinux'] == true and $manage_selinux {
+    selboolean{'zabbix_can_network':
       persistent => true,
       value      => 'on',
     }
   }
+
 }

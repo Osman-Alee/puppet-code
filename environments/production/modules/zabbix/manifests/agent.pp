@@ -27,14 +27,6 @@
 # [*manage_repo*]
 #   When true, it will create repository for installing the agent.
 #
-# [*manage_choco*]
-#   When true on windows, it will use chocolatey to install the agent.
-#   The module chocolatey is required https://forge.puppet.com/puppetlabs/chocolatey.
-#
-# [*zabbix_package_provider*]
-#   Which package's provider to use to install the agent.
-#   It is undef for all linux os and set to 'chocolatey' on windows.
-#
 # [*manage_resources*]
 #   When true, it will export resources to something like puppetdb.
 #   When set to true, you'll need to configure 'storeconfigs' to make
@@ -58,12 +50,6 @@
 # [*zbx_templates*]
 #   List of templates which will be added when host is configured.
 #
-# [*zbx_macros*]
-#   List of macros which will be added when host is configured.
-#
-# [*zbx_interface_type*]
-#   Integer specifying type of interface to be created
-#
 # [*agent_configfile_path*]
 #   Agent config file path defaults to /etc/zabbix/zabbix_agentd.conf
 #
@@ -76,23 +62,11 @@
 # [*logfilesize*]
 #   Maximum size of log file in MB.
 #
-# [*logtype*]
-#   Specifies where log messages are written to. Can be one of:
-#   - console
-#   - file
-#   - system
-#
 # [*debuglevel*]
 #   Specifies debug level.
 #
 # [*sourceip*]
 #   Source ip address for outgoing connections.
-#
-# [*allowkey*]
-#   Allow execution of item keys matching pattern.
-#
-# [*denykey*]
-#   Deny execution of items keys matching pattern.
 #
 # [*enableremotecommands*]
 #   Whether remote commands from zabbix server are allowed.
@@ -144,14 +118,6 @@
 # [*hostmetadataitem*]
 #   Optional parameter that defines an item used for getting host metadata.
 #
-# [*hostinterface*]
-#   Optional parameter that defines host metadata. Host metadata is used only at host
-#   auto-registration process (active agent).
-#
-# [*hostinterfaceitem*]
-#   Optional parameter that defines an item used for getting host interface.
-#   Host interface is used at host auto-registration process.
-#
 # [*refreshactivechecks*]
 #   How often list of active checks is refreshed, in seconds.
 #
@@ -202,30 +168,6 @@
 # [*tlspskidentity*]
 #   Unique, case sensitive string used to identify the pre-shared key.
 #
-# [*tlscipherall*]
-#   GnuTLS priority string or OpenSSL (TLS 1.2) cipher string. Override the default ciphersuite selection criteria
-#   for certificate- and PSK-based encryption.
-#
-# [*tlscipherall13*]
-#   Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3. Override the default ciphersuite selection criteria
-#   for certificate- and PSK-based encryption.
-#
-# [*tlsciphercert*]
-#   GnuTLS priority string or OpenSSL (TLS 1.2) cipher string. Override the default ciphersuite selection criteria
-#   for certificate-based encryption.
-#
-# [*tlsciphercert13*]
-#   Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3. Override the default ciphersuite selection criteria
-#   for certificate-based encryption.
-#
-# [*tlscipherpsk*]
-#  GnuTLS priority string or OpenSSL (TLS 1.2) cipher string. Override the default ciphersuite selection criteria
-#  for PSK-based encryption.
-#
-# [*tlscipherpsk13*]
-#  Cipher string for OpenSSL 1.1.1 or newer in TLS 1.3. Override the default ciphersuite selection criteria
-#  for PSK-based encryption.
-#
 # [*tlsservercertissuer*]
 #   Allowed server certificate issuer.
 #
@@ -248,9 +190,7 @@
 #   Module to load at agent startup.
 #
 # [*manage_startup_script*]
-#  If the init script should be managed by this module. Attention: This might
-#  cause problems with some config options of this module (e.g
-#  agent_configfile_path)
+#  If the init script should be managed by this module. Attention: This might cause problems with some config options of this module (e.g agent_configfile_path)
 #
 # === Example
 #
@@ -280,8 +220,6 @@ class zabbix::agent (
   $zabbix_version                                 = $zabbix::params::zabbix_version,
   $zabbix_package_state                           = $zabbix::params::zabbix_package_state,
   $zabbix_package_agent                           = $zabbix::params::zabbix_package_agent,
-  Optional[String[1]] $zabbix_package_provider    = $zabbix::params::zabbix_package_provider,
-  Boolean $manage_choco                           = $zabbix::params::manage_choco,
   Boolean $manage_firewall                        = $zabbix::params::manage_firewall,
   Boolean $manage_repo                            = $zabbix::params::manage_repo,
   Boolean $manage_resources                       = $zabbix::params::manage_resources,
@@ -291,18 +229,14 @@ class zabbix::agent (
   Variant[String[1],Array[String[1]]] $zbx_groups = $zabbix::params::agent_zbx_groups,
   $zbx_group_create                               = $zabbix::params::agent_zbx_group_create,
   $zbx_templates                                  = $zabbix::params::agent_zbx_templates,
-  Array[Hash] $zbx_macros                         = [],
-  Integer[1,4] $zbx_interface_type                = 1,
   $agent_configfile_path                          = $zabbix::params::agent_configfile_path,
   $pidfile                                        = $zabbix::params::agent_pidfile,
   $servicename                                    = $zabbix::params::agent_servicename,
-  Enum['console', 'file', 'system'] $logtype      = $zabbix::params::agent_logtype,
+  String $logtype                                 = $zabbix::params::agent_logtype,
   Optional[Stdlib::Absolutepath] $logfile         = $zabbix::params::agent_logfile,
   $logfilesize                                    = $zabbix::params::agent_logfilesize,
   $debuglevel                                     = $zabbix::params::agent_debuglevel,
   $sourceip                                       = $zabbix::params::agent_sourceip,
-  Optional[String[1]] $allowkey                   = $zabbix::params::agent_allowkey,
-  Optional[String[1]] $denykey                    = $zabbix::params::agent_denykey,
   $enableremotecommands                           = $zabbix::params::agent_enableremotecommands,
   $logremotecommands                              = $zabbix::params::agent_logremotecommands,
   $server                                         = $zabbix::params::agent_server,
@@ -316,8 +250,6 @@ class zabbix::agent (
   $hostnameitem                                   = $zabbix::params::agent_hostnameitem,
   $hostmetadata                                   = $zabbix::params::agent_hostmetadata,
   $hostmetadataitem                               = $zabbix::params::agent_hostmetadataitem,
-  Optional[Stdlib::Fqdn] $hostinterface           = $zabbix::params::agent_hostinterface,
-  Optional[Stdlib::Fqdn] $hostinterfaceitem       = $zabbix::params::agent_hostinterfaceitem,
   $refreshactivechecks                            = $zabbix::params::agent_refreshactivechecks,
   $buffersend                                     = $zabbix::params::agent_buffersend,
   $buffersize                                     = $zabbix::params::agent_buffersize,
@@ -325,22 +257,16 @@ class zabbix::agent (
   Optional[Array] $zabbix_alias                   = $zabbix::params::agent_zabbix_alias,
   $timeout                                        = $zabbix::params::agent_timeout,
   $allowroot                                      = $zabbix::params::agent_allowroot,
-  Optional[String[1]] $zabbix_user                = $zabbix::params::agent_zabbix_user,
+  $zabbix_user                                    = $zabbix::params::agent_zabbix_user,
   $include_dir                                    = $zabbix::params::agent_include,
   $include_dir_purge                              = $zabbix::params::agent_include_purge,
   $unsafeuserparameters                           = $zabbix::params::agent_unsafeuserparameters,
   $userparameter                                  = $zabbix::params::agent_userparameter,
-  Optional[String[1]] $loadmodulepath             = $zabbix::params::agent_loadmodulepath,
+  $loadmodulepath                                 = $zabbix::params::agent_loadmodulepath,
   $loadmodule                                     = $zabbix::params::agent_loadmodule,
   $tlsaccept                                      = $zabbix::params::agent_tlsaccept,
   $tlscafile                                      = $zabbix::params::agent_tlscafile,
   $tlscertfile                                    = $zabbix::params::agent_tlscertfile,
-  Optional[String[1]] $tlscipherall               = $zabbix::params::agent_tlscipherall,
-  Optional[String[1]] $tlscipherall13             = $zabbix::params::agent_tlscipherall13,
-  Optional[String[1]] $tlsciphercert              = $zabbix::params::agent_tlsciphercert,
-  Optional[String[1]] $tlsciphercert13            = $zabbix::params::agent_tlsciphercert13,
-  Optional[String[1]] $tlscipherpsk               = $zabbix::params::agent_tlscipherpsk,
-  Optional[String[1]] $tlscipherpsk13             = $zabbix::params::agent_tlscipherpsk13,
   $tlsconnect                                     = $zabbix::params::agent_tlsconnect,
   $tlscrlfile                                     = $zabbix::params::agent_tlscrlfile,
   $tlskeyfile                                     = $zabbix::params::agent_tlskeyfile,
@@ -348,8 +274,8 @@ class zabbix::agent (
   $tlspskidentity                                 = $zabbix::params::agent_tlspskidentity,
   $tlsservercertissuer                            = $zabbix::params::agent_tlsservercertissuer,
   $tlsservercertsubject                           = $zabbix::params::agent_tlsservercertsubject,
-  Optional[String[1]] $agent_config_owner         = $zabbix::params::agent_config_owner,
-  Optional[String[1]] $agent_config_group         = $zabbix::params::agent_config_group,
+  String $agent_config_owner                      = $zabbix::params::agent_config_owner,
+  String $agent_config_group                      = $zabbix::params::agent_config_group,
   Boolean $manage_selinux                         = $zabbix::params::manage_selinux,
   Array[String] $selinux_require                  = $zabbix::params::selinux_require,
   Hash[String, Array] $selinux_rules              = $zabbix::params::selinux_rules,
@@ -357,6 +283,33 @@ class zabbix::agent (
   String $service_type                            = $zabbix::params::service_type,
   Boolean $manage_startup_script                  = $zabbix::params::manage_startup_script,
 ) inherits zabbix::params {
+
+  # the following two codeblocks are a bit blargh. The correct default value for
+  # $real_additional_service_params and $type changes based on the value of $zabbix_version
+  # We handle this in the params.pp, but that doesn't work if somebody provides a specific
+  # value for $zabbix_version and overwrites our default :(
+  # the codeblocks set defaults for both variables if $zabbix_version got provided,
+  # but only if the variables aren't provided.
+
+  if $zabbix_version != $zabbix::params::zabbix_version and $additional_service_params == $zabbix::params::additional_service_params {
+    $real_additional_service_params = versioncmp($zabbix_version, '3.0') ? {
+      1  => '--foreground',
+      0  => '--foreground',
+      -1 => '',
+    }
+  } else {
+    $real_additional_service_params = $additional_service_params
+  }
+  if $zabbix_version != $zabbix::params::zabbix_version and $service_type == $zabbix::params::service_type {
+    $real_service_type = versioncmp($zabbix_version, '3.0') ? {
+      1  => 'simple',
+      0  => 'simple',
+      -1 => 'forking',
+    }
+  } else {
+    $real_service_type = $service_type
+  }
+
   # Find if listenip is set. If not, we can set to specific ip or
   # to network name. If more than 1 interfaces are available, we
   # can find the ipaddress of this specific interface if listenip
@@ -393,19 +346,17 @@ class zabbix::agent (
     } else {
       $use_proxy = ''
     }
-    $_hostname = pick($hostname, $facts['networking']['fqdn'])
+    $_hostname = pick($hostname, $facts['fqdn'])
 
     class { 'zabbix::resources::agent':
-      hostname      => $_hostname,
-      ipaddress     => $listen_ip,
-      use_ip        => $agent_use_ip,
-      port          => $listenport,
-      groups        => [$groups].flatten(),
-      group_create  => $zbx_group_create,
-      templates     => $zbx_templates,
-      macros        => $zbx_macros,
-      interfacetype => $zbx_interface_type,
-      proxy         => $use_proxy,
+      hostname     => $_hostname,
+      ipaddress    => $listen_ip,
+      use_ip       => $agent_use_ip,
+      port         => $listenport,
+      groups       => [$groups].flatten(),
+      group_create => $zbx_group_create,
+      templates    => $zbx_templates,
+      proxy        => $use_proxy,
     }
   }
 
@@ -417,37 +368,27 @@ class zabbix::agent (
     }
   }
 
-  if $facts['kernel'] == 'windows' and $manage_choco {
-    package { $zabbix_package_agent:
-      ensure   => $zabbix_version,
-      provider => $zabbix_package_provider,
-      tag      => 'zabbix',
-    }
-  }
-  else {
-    # Installing the package
-    package { $zabbix_package_agent:
-      ensure   => $zabbix_package_state,
-      require  => Class['zabbix::repo'],
-      tag      => 'zabbix',
-      provider => $zabbix_package_provider,
-    }
+  # Installing the package
+  package { $zabbix_package_agent:
+    ensure  => $zabbix_package_state,
+    require => Class['zabbix::repo'],
+    tag     => 'zabbix',
   }
 
   # Ensure that the correct config file is used.
   if $manage_startup_script {
-    zabbix::startup { $servicename:
+    zabbix::startup {$servicename:
       pidfile                   => $pidfile,
       agent_configfile_path     => $agent_configfile_path,
       zabbix_user               => $zabbix_user,
-      additional_service_params => $additional_service_params,
-      service_type              => $service_type,
+      additional_service_params => $real_additional_service_params,
+      service_type              => $real_service_type,
       service_name              => 'zabbix-agent',
       require                   => Package[$zabbix_package_agent],
     }
   }
 
-  if $agent_configfile_path != '/etc/zabbix/zabbix_agentd.conf' and $facts['kernel'] != 'windows' {
+  if $agent_configfile_path != '/etc/zabbix/zabbix_agentd.conf' {
     file { '/etc/zabbix/zabbix_agentd.conf':
       ensure  => absent,
       require => Package[$zabbix_package_agent],
@@ -455,24 +396,23 @@ class zabbix::agent (
   }
 
   # Controlling the 'zabbix-agent' service
-  service { $servicename:
-    ensure  => $service_ensure,
-    enable  => $service_enable,
-    require => Package[$zabbix_package_agent],
+  if str2bool(getvar('::systemd')) {
+    $service_provider = 'systemd'
+  } else {
+    $service_provider = undef
   }
-
-  # Override the service provider on AIX
-  # Doing it this way allows overriding it on other platforms
-  if $facts['os']['name'] == 'AIX' {
-    Service[$servicename] {
-      service_provider => 'init',
-      service_path     => '/etc/rc.d/init.d',
-    }
+  service { $servicename:
+    ensure     => $service_ensure,
+    enable     => $service_enable,
+    provider   => $service_provider,
+    hasstatus  => true,
+    hasrestart => true,
+    require    => Package[$zabbix_package_agent],
   }
 
   # Configuring the zabbix-agent configuration file
   file { $agent_configfile_path:
-    ensure  => file,
+    ensure  => present,
     owner   => $agent_config_owner,
     group   => $agent_config_group,
     mode    => '0644',
@@ -495,25 +435,21 @@ class zabbix::agent (
 
   # Manage firewall
   if $manage_firewall {
-    $servers = split($server, ',')
-    $servers.each |$_server| {
-      firewall { "150 zabbix-agent from ${_server}":
-        dport  => $listenport,
-        proto  => 'tcp',
-        action => 'accept',
-        source => $_server,
-        state  => [
-          'NEW',
-          'RELATED',
-          'ESTABLISHED',
-        ],
-      }
+    firewall { '150 zabbix-agent':
+      dport  => $listenport,
+      proto  => 'tcp',
+      action => 'accept',
+      source => $server,
+      state  => [
+        'NEW',
+        'RELATED',
+        'ESTABLISHED'],
     }
   }
   # the agent doesn't work perfectly fine with selinux
   # https://support.zabbix.com/browse/ZBX-11631
-  if fact('os.selinux.enabled') == true and $manage_selinux {
-    selinux::module { 'zabbix-agent':
+  if $facts['selinux'] == true and $manage_selinux {
+    selinux::module{'zabbix-agent':
       ensure     => 'present',
       content_te => template('zabbix/selinux/zabbix-agent.te.erb'),
       before     => Service[$servicename],

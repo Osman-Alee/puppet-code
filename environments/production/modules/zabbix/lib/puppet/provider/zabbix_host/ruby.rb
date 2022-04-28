@@ -10,18 +10,13 @@ Puppet::Type.type(:zabbix_host).provide(:ruby, parent: Puppet::Provider::Zabbix)
         selectParentTemplates: ['host'],
         selectInterfaces: %w[interfaceid type main ip port useip],
         selectGroups: ['name'],
-        selectMacros: %w[macro value],
         output: %w[host proxy_hostid]
       }
     )
 
     api_hosts.map do |h|
-      # only select the default interface for given host
-      # there is only 1 interface that can be default
-      interface = h['interfaces'].select { |i| i['main'].to_i == 1 }.first
+      interface = h['interfaces'].select { |i| i['type'].to_i == 1 && i['main'].to_i == 1 }.first
       use_ip = !interface['useip'].to_i.zero?
-      proxy_select = proxies.select { |_name, id| id == h['proxy_hostid'] }.keys.first
-      proxy_select = '' if proxy_select.nil?
       new(
         ensure: :present,
         id: h['hostid'].to_i,
@@ -33,9 +28,7 @@ Puppet::Type.type(:zabbix_host).provide(:ruby, parent: Puppet::Provider::Zabbix)
         groups: h['groups'].map { |g| g['name'] },
         group_create: nil,
         templates: h['parentTemplates'].map { |x| x['host'] },
-        macros: h['macros'].map { |macro| { macro['macro'] => macro['value'] } },
-        proxy: proxy_select,
-        interfacetype: interface['type'].to_i
+        proxy: proxies.select { |_name, id| id == h['proxy_hostid'] }.keys.first
       )
     end
   end
@@ -63,7 +56,7 @@ Puppet::Type.type(:zabbix_host).provide(:ruby, parent: Puppet::Provider::Zabbix)
       proxy_hostid: proxy_hostid,
       interfaces: [
         {
-          type: @resource[:interfacetype].nil? ? 1 : @resource[:interfacetype],
+          type: 1,
           main: 1,
           ip: @resource[:ipaddress],
           dns: @resource[:hostname],
@@ -147,16 +140,6 @@ Puppet::Type.type(:zabbix_host).provide(:ruby, parent: Puppet::Provider::Zabbix)
     )
   end
 
-  def interfacetype=(int)
-    zbx.query(
-      method: 'hostinterface.update',
-      params: {
-        interfaceid: @property_hash[:interfaceid],
-        type: int
-      }
-    )
-  end
-
   def groups=(hostgroups)
     gids = get_groupids(hostgroups, @resource[:group_create])
     groups = transform_to_array_hash('groupid', gids)
@@ -187,17 +170,6 @@ Puppet::Type.type(:zabbix_host).provide(:ruby, parent: Puppet::Provider::Zabbix)
         hostid: @property_hash[:id],
         templates: transform_to_array_hash('templateid', should_template_ids),
         templates_clear: transform_to_array_hash('templateid', templates_clear)
-      }
-    )
-  end
-
-  def macros=(array)
-    macroarray = array.map { |macro| { 'macro' => macro.first[0], 'value' => macro.first[1] } }
-    zbx.query(
-      method: 'host.update',
-      params: {
-        hostid: @property_hash[:id],
-        macros: macroarray
       }
     )
   end

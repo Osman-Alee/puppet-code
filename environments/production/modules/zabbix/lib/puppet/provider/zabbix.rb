@@ -51,8 +51,7 @@ class Puppet::Provider::Zabbix < Puppet::Provider
       user: api_config['default']['zabbix_user'],
       password: api_config['default']['zabbix_pass'],
       http_user: api_config['default']['zabbix_user'],
-      http_password: api_config['default']['zabbix_pass'],
-      ignore_version: true
+      http_password: api_config['default']['zabbix_pass']
     )
     zbx
   end
@@ -73,6 +72,13 @@ class Puppet::Provider::Zabbix < Puppet::Provider
         output: ['host']
       }
     )
+  rescue Puppet::ExecutionFailure
+    false
+  end
+
+  # Check if proxy exists. When error raised, return false.
+  def check_proxy(host)
+    zbx.proxies.get_id(host: host)
   rescue Puppet::ExecutionFailure
     false
   end

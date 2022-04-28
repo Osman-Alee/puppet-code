@@ -50,7 +50,7 @@
 #
 # Copyright 2014 Werner Dijkerman
 #
-class zabbix::javagateway (
+class zabbix::javagateway(
   $zabbix_version           = $zabbix::params::zabbix_version,
   $zabbix_package_state     = $zabbix::params::zabbix_package_state,
   Boolean $manage_firewall  = $zabbix::params::manage_firewall,
@@ -60,7 +60,8 @@ class zabbix::javagateway (
   $listenport               = $zabbix::params::javagateway_listenport,
   $startpollers             = $zabbix::params::javagateway_startpollers,
   $timeout                  = $zabbix::params::javagateway_timeout,
-) inherits zabbix::params {
+) inherits zabbix::params  {
+
   # Only include the repo class if it has not yet been included
   unless defined(Class['Zabbix::Repo']) {
     class { 'zabbix::repo':
@@ -78,7 +79,7 @@ class zabbix::javagateway (
 
   # Configuring the zabbix-javagateway configuration file
   file { '/etc/zabbix/zabbix_java_gateway.conf':
-    ensure  => file,
+    ensure  => present,
     owner   => 'zabbix',
     group   => 'zabbix',
     mode    => '0640',

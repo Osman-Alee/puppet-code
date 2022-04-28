@@ -6,8 +6,7 @@ Puppet::Type.type(:zabbix_template).provide(:ruby, parent: Puppet::Provider::Zab
     zbx.configurations.import(
       format: 'xml',
       rules: {
-        # application parameter was removed on Zabbix 5.4
-        (@resource[:zabbix_version] =~ %r{[45]\.[02]} ? :applications : nil) => {
+        applications: {
           createMissing: true
         },
         discoveryRules: {
@@ -33,8 +32,7 @@ Puppet::Type.type(:zabbix_template).provide(:ruby, parent: Puppet::Provider::Zab
           createMissing: true,
           updateExisting: true
         },
-        # screens parameter was removed on Zabbix 5.4
-        (@resource[:zabbix_version] =~ %r{[45]\.[02]} ? :screens : nil) => {
+        screens: {
           createMissing: true,
           updateExisting: true
         },
@@ -45,8 +43,7 @@ Puppet::Type.type(:zabbix_template).provide(:ruby, parent: Puppet::Provider::Zab
           createMissing: true,
           updateExisting: true
         },
-        # templateDashboards was renamed to templateScreen on Zabbix >= 5.2
-        (@resource[:zabbix_version] =~ %r{5\.[24]} ? :templateDashboards : :templateScreens) => {
+        templateScreens: {
           createMissing: true,
           updateExisting: true
         },
@@ -54,7 +51,7 @@ Puppet::Type.type(:zabbix_template).provide(:ruby, parent: Puppet::Provider::Zab
           createMissing: true,
           updateExisting: true
         }
-      }.delete_if { |key, _| key.nil? },
+      },
       source: template_contents
     )
   end
