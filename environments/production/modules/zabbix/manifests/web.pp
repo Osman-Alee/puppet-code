@@ -180,20 +180,20 @@
 #   documentation in init.pp
 #   The following is an example of an multiple host setup:
 #
-#   node 'wdpuppet02.dj-wasabi.local' {
-#     class { 'apache':
-#         mpm_module => 'prefork',
-#     }
-#     class { 'apache::mod::php': }
-#     class { 'zabbix::web':
-#       zabbix_url    => 'zabbix.dj-wasabi.nl',
-#       zabbix_server => 'wdpuppet03.dj-wasabi.local',
-#       database_host => 'wdpuppet04.dj-wasabi.local',
-#       database_type => 'mysql',
-#       puppetgem     => 'gem',
-#     }
-#   }
-#
+  node 'serverdebain02-vmwarevirtualplatform.localdomain.lan' {
+    class { 'apache':
+        mpm_module => 'prefork',
+    }
+    class { 'apache::mod::php': }
+    class { 'zabbix::web':
+      zabbix_url    => 'serverdebain02-vmwarevirtualplatform.localdomain.lan',
+      zabbix_server => 'serverdebain02-vmwarevirtualplatform.localdomain.lan',
+      database_host => 'serverdebain02-vmwarevirtualplatform.localdomain.lan',
+      database_type => 'mysql',
+      puppetgem     => 'gem',
+    }
+  }
+
 # === Authors
 #
 # Author Name: ikben@werner-dijkerman.nl
