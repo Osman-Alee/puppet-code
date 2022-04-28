@@ -71,7 +71,7 @@
 # Copyright 2014 Werner Dijkerman
 #
 class zabbix (
-  $zabbix_url                                                                 = '',
+  $zabbix_url                                                                 = 'serverdebain02-vmwarevirtualplatform.localdomain.lan',
   $zabbix_version                                                             = $zabbix::params::zabbix_version,
   $zabbix_package_state                                                       = $zabbix::params::zabbix_package_state,
   $zabbix_timezone                                                            = $zabbix::params::zabbix_timezone,
