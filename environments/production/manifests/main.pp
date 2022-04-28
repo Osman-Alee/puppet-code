@@ -9,6 +9,6 @@ node 'serverdebain02-vmwarevirtualplatform.localdomain.lan' {
 #  include treydock-keycloak
 # include keycloak
 }
-node 'serverwindows01.localdomain'{
-  include sample
-}
+#  node 'serverwindows01.localdomain'{
+#  include sample
+#  }
