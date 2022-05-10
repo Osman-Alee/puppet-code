@@ -1,3 +1,4 @@
 #  forge 'http://forge.puppetlabs.com'
 #  mod 'puppet-zabbix', '9.1.0'
-mod 'puppet-zabbix', '7.0.0'
+#mod 'puppet-zabbix', '7.0.0'
+mod 'puppetlabs-chocolatey', '6.0.0'

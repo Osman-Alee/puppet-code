@@ -1,0 +1,27 @@
+class win2mod {
+#  require chocolatey # forge module
+  package { provider => chocolatey, }
+
+  package { 'git':
+    ensure => installed,
+  }
+
+  user { 'testuser':
+    ensure  => present,
+    groups  => 'testgroup',
+    comment => 'Test user',
+  }
+
+  file { 'C:\Program Files\testuser':
+    ensure => directory,
+    owner  => 'testuser',
+    group  => 'testgroup', 
+  }
+
+#  acl { 'C:\Program Files\testuser':
+#    permissions => [
+#      { identity => 'testuser', rights => ['full']},
+#      { identity => 'testgroup', rights => ['read']}
+#    ],
+#  }
+}
